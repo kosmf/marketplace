@@ -2,7 +2,7 @@
 
 const express = require("express");
 const router = express.Router();
-const response = require("@Component/response");
+const response = require("@Components/response");
 
 const index = (req, res, next) => response.res404(res);
 

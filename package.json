@@ -12,12 +12,12 @@
   "license": "ISC",
   "_moduleAliases": {
     "@root": ".",
-    "@Component": "./components",
-    "@Controller": "./controllers",
-    "@Middleware": "./middlewares",
-    "@Model": "./models",
-    "@Config": "./config",
-    "@Service": "./services"
+    "@Components": "./components",
+    "@Controllers": "./controllers",
+    "@Middlewares": "./middlewares",
+    "@Models": "./models",
+    "@Configs": "./configs",
+    "@Services": "./services"
   },
   "dependencies": {
     "apicache": "^1.6.3",

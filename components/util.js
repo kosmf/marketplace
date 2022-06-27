@@ -1,6 +1,6 @@
 "use strict";
 const crypto = require("crypto");
-const { saltPassword } = require("@Components/enum");
+const { saltPassword } = require("@Componentss/enum");
 
 exports.generateSaltPassword = (plainPassword) => {
   const passwordString = `${saltPassword.left}_${String(plainPassword)}_${saltPassword.right}`;

@@ -5,12 +5,12 @@
     "baseUrl": "./",
     "paths": {
       "@root/*": ["./*"],
-      "@Controller/*": ["./controllers/*"],
-      "@Config/*": ["./config/*"],
-      "@Component/*": ["./components/*"],
-      "@Middleware/*": ["./middlewares/*"],
-      "@Model/*": ["./models/*"],
-      "@Service/*": ["./services/*"],
+      "@Controllers/*": ["./controllers/*"],
+      "@Configs/*": ["configs/*"],
+      "@Components/*": ["./components/*"],
+      "@Middlewares/*": ["./middlewares/*"],
+      "@Models/*": ["./models/*"],
+      "@Services/*": ["./services/*"],
     }
   },
   "exclude": ["node_modules", "**/node_modules/*"]

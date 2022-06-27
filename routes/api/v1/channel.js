@@ -2,10 +2,10 @@
 
 const express = require("express");
 const router = express.Router();
-const response = require("@Component/response");
+const response = require("@Components/response");
 
-const channelController = require("@Controller/ChannelController/index");
-const validator = require("@Middleware/validator")
+const channelController = require("@Controllers/Channel");
+const validator = require("@Middlewares/validator")
 
 const index = (req, res, next) => response.res404(res);
 
