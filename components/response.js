@@ -1,7 +1,7 @@
 "use strict";
 
-exports.res200 = (res, message = "Operation success", data, meta) => {
-	const response = { message, meta, data };
+exports.res200 = (res, statusCode, message = "Operation success", data) => {
+	const response = { statusCode, message, data };
 	res.status(200);
 	res.json(response);
 	res.end();
