@@ -30,10 +30,10 @@ exports.getOrderList = async (req, res) => {
       };
       
     return await axios.request(config)
-      .then(async(response) => {
+      .then(async(resApi) => {
 
-        console.log(JSON.stringify(response.data));
-        response.res200(res, "000", "Generate Success", { fromTime:fromTime, toTime: toTime, token: res.locals.token, response: response.data })
+        console.log(JSON.stringify(resApi.data));
+        response.res200(res, "000", "Generate Success", { fromTime:fromTime, toTime: toTime, token: res.locals.token, response: resApi.data })
 
       })
       .catch((error) => {
