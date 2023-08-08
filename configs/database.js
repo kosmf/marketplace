@@ -18,4 +18,10 @@ db.authenticate()
   .then(() => console.log(`Connected to database : ${DB_HOST}:${DB_PORT}`))
   .catch(() => console.error(`Unable to connect to the database!`));
 
-module.exports = db;
+const salesorders = require("@Models/salesorders");
+const salesorderdetails = require("@Models/salesorderdetails");
+
+module.exports = {
+  salesorders: salesorders(db, DataTypes),
+  salesorderdetails: salesorderdetails(db, DataTypes),
+};
