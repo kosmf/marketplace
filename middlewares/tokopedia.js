@@ -49,7 +49,9 @@ exports.getShop = async (req, res) => {
 
   let shopList = await axios.request(config)
     .then(({ data: resApi }) => {
-      res.locals.shop = resApi["response"]["data"];
+
+      console.log({ resApi: resApi })
+      res.locals.shop = resApi["data"];
       return 1;
     })
     .catch((error) => {
