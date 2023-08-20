@@ -140,11 +140,11 @@ exports.getSingleOrder = async (req, res) => {
       Authorization: "Bearer "+res.locals.token,
     },
   };
-  
+
   console.log({ request: config })
 
   return await axios.request(config)
-    .then((resApi) => {
+    .then(({ data: resApi }) => {
       console.log({ response: resApi })
       return response.res200(res, "000", "Success", { response: resApi });
     })
@@ -166,7 +166,7 @@ exports.getShop = async (req, res) => {
   console.log({ request: config })
 
   return await axios.request(config)
-    .then((resApi) => {
+    .then(({ data: resApi }) => {
       console.log({ response: resApi })
       return response.res200(res, "000", "Success", { response: resApi });
     })
