@@ -37,7 +37,7 @@ exports.getToken = async (req,res,next) => {
   return next();
 };
 
-exports.getShop = async (req, res) => {
+exports.getShop = async (req, res, next) => {
   let config = {
     method: "get",
     maxBodyLength: Infinity,
