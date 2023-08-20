@@ -143,7 +143,7 @@ exports.getSingleOrder = async (req, res) => {
 
   return await axios.request(config)
     .then((resApi) => {
-      return response.res200(res, "000", "Success", { resApi });
+      return response.res200(res, "000", "Success", { response: resApi });
     })
     .catch((error) => {
       console.log(error);
@@ -162,7 +162,7 @@ exports.getShop = async (req, res) => {
 
   return await axios.request(config)
     .then((resApi) => {
-      return response.res200(res, "000", "Success", { resApi });
+      return response.res200(res, "000", "Success", { response: resApi });
     })
     .catch((error) => {
       console.log(error);
