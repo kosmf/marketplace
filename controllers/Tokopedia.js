@@ -21,6 +21,24 @@ const generateCustomLengthString = (length) => {
     return result;
 }
 
+const getShopInfo = (shopId) => {
+  let shopInfo = {}
+  let shopList = res.locals.shop
+
+  shopList.map((shop) => {
+
+    if(shopId == shop.shop_id){
+      shopInfo.shop_id = shop.shop_id
+      shopInfo.shop_name = shop.shop_name
+      shopInfo.email = shop.email
+      shopInfo.phone = shop.phone
+    }
+
+  })
+
+  return shopInfo;
+}
+
 exports.getOrderList = async (req, res) => {
 
   // Get current date
@@ -55,6 +73,7 @@ exports.getOrderList = async (req, res) => {
           console.log(element)
   
           let orderNo = generateCustomLengthString(10)+element.order_id
+          let shopInfo = getShopInfo(element.shop_id)
   
           let payloadSO = {
               orderno: orderNo,
@@ -72,9 +91,9 @@ exports.getOrderList = async (req, res) => {
               deladd4: element.recipient.address.province,
               deladd5: element.recipient.address.postal_code,
               deladd6: element.recipient.address.country,
-              contactphone: element.recipient.phone,
-              contactemail: 'FishingZone@gmail.com',
-              deliverto: 'Fishing Zone',
+              contactphone: shopInfo.phone,
+              contactemail: shopInfo.email,
+              deliverto: shopInfo.shop_name,
               deliverblind: '2',
               freightcost: '0',
               fromstkloc: 'PST',
@@ -141,11 +160,8 @@ exports.getSingleOrder = async (req, res) => {
     },
   };
 
-  console.log({ request: config })
-
   return await axios.request(config)
     .then(({ data: resApi }) => {
-      console.log({ response: resApi })
       return response.res200(res, "000", "Success", { response: resApi });
     })
     .catch((error) => {
@@ -163,12 +179,9 @@ exports.getShop = async (req, res) => {
     },
   };
 
-  console.log({ request: config })
-
   return await axios.request(config)
     .then(({ data: resApi }) => {
-      console.log({ response: resApi })
-      return response.res200(res, "000", "Success", { response: resApi });
+      return response.res200(res, "000", "Success", resApi);
     })
     .catch((error) => {
       console.log(error);
