@@ -42,7 +42,7 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: 0
     },
     deladd1: {
-      type: DataTypes.STRING(40),
+      type: DataTypes.STRING(100),
       allowNull: false
     },
     deladd2: {

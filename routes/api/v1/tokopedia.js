@@ -17,6 +17,22 @@ router.route("/getOrderList")
         })
     });
 
+router.route("/getOrder/:order_id")
+.get(getToken, async (req, res, next) => {
+    await tokopediaController.getSingleOrder(req, res, next).catch((error) => {
+        console.error(error);
+        return response.res500(res)
+    })
+});
+
+router.route("/getShop")
+.get(getToken, async (req, res, next) => {
+    await tokopediaController.getShop(req, res, next).catch((error) => {
+        console.error(error);
+        return response.res500(res)
+    })
+});
+
 router.all("*", index);
 
 module.exports = router;
