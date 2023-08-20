@@ -92,7 +92,7 @@ exports.getOrderList = async (req, res) => {
               deladd6: element.recipient.address.country,
               contactphone: shopInfo.phone,
               contactemail: shopInfo.email,
-              deliverto: shopInfo.shop_na,
+              deliverto: shopInfo.shop_name,
               deliverblind: '2',
               freightcost: '0',
               fromstkloc: 'PST',
