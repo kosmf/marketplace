@@ -21,9 +21,8 @@ const generateCustomLengthString = (length) => {
     return result;
 }
 
-const getShopInfo = (shopId) => {
+const getShopInfo = (shopList, shopId) => {
   let shopInfo = {}
-  let shopList = res.locals.shop
 
   shopList.map((shop) => {
 
@@ -73,7 +72,7 @@ exports.getOrderList = async (req, res) => {
           console.log(element)
   
           let orderNo = generateCustomLengthString(10)+element.order_id
-          let shopInfo = getShopInfo(element.shop_id)
+          let shopInfo = getShopInfo(res.locals.shop, element.shop_id)
   
           let payloadSO = {
               orderno: orderNo,
@@ -93,7 +92,7 @@ exports.getOrderList = async (req, res) => {
               deladd6: element.recipient.address.country,
               contactphone: shopInfo.phone,
               contactemail: shopInfo.email,
-              deliverto: shopInfo.shop_name,
+              deliverto: shopInfo.shop_na,
               deliverblind: '2',
               freightcost: '0',
               fromstkloc: 'PST',
