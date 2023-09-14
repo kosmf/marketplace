@@ -4,25 +4,40 @@ const express = require("express");
 const router = express.Router();
 const response = require("@Components/response");
 
-const channelController = require("@root/controllers/Tokopedia");
-const validator = require("@Middlewares/validator")
+const tiktokController = require("@root/controllers/Tiktok");
 
 const index = (req, res, next) => response.res404(res);
 
-router.route("/:channelId*?")
-    .get(validator.channelGetValidator(), validator.validate, (req, res, next) => {
-        // Route to specified channel or get list channel
-        if(req.params.channelId){
-            channelController.getDetailChannel(req, res).catch((error) => {
-                console.error(error);
-                return response.res500(res)
-            })
-        } else {
-            channelController.getListChannel(req, res).catch((error) => {
-                console.error(error);
-                return response.res500(res)
-            })  
-        }
+router.route("/getToken")
+    .get(async (req, res, next) => {
+        await tiktokController.getToken(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
+router.route("/refreshToken")
+    .get(async (req, res, next) => {
+        await tiktokController.refreshToken(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
+router.route("/getOrderList")
+    .get(async (req, res, next) => {
+        await tiktokController.getOrderList(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
+router.route("/getOrderDetail")
+    .get(async (req, res, next) => {
+        await tiktokController.getOrderDetail(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
     });
 
 router.all("*", index);

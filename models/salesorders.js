@@ -42,28 +42,28 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: 0
     },
     deladd1: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     deladd2: {
-      type: DataTypes.STRING(40),
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     deladd3: {
-      type: DataTypes.STRING(40),
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     deladd4: {
-      type: DataTypes.STRING(40),
+      type: DataTypes.STRING(255),
       allowNull: true,
       defaultValue: "NULL"
     },
     deladd5: {
-      type: DataTypes.STRING(20),
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     deladd6: {
-      type: DataTypes.STRING(15),
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     contactphone: {
@@ -72,7 +72,7 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: "NULL"
     },
     contactemail: {
-      type: DataTypes.STRING(40),
+      type: DataTypes.STRING(255),
       allowNull: true,
       defaultValue: "NULL"
     },

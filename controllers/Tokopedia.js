@@ -126,7 +126,7 @@ exports.getOrderList = async (req, res) => {
                   estimate:0,
                   discountpercent:(parseInt(element.promo_order_detail.total_discount_product)/(+product.price*+product.quantity))*100,
                   discountpercent2:0,
-                  actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
+                  actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
                   completed:'0',
                   narrative:'',
                   itemdue: element.shipment_fulfillment.accept_deadline.split("T")[0],
