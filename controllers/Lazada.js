@@ -59,6 +59,14 @@ async function readFileAsync(fileName) {
     }
 }
 
+
+exports.callback = async(req, res) => {
+    console.log({ reqCallbackHeaders : req.headers })
+    console.log({ reqCallback : req.body })
+
+    return response.res200(res, "000", "Success", { callback: req.body })
+}
+
 exports.getToken = async (req, res) => {
     const getToken = await aLazadaAPI
     .generateAccessToken({ code: AUTH_CODE_LAZADA })
