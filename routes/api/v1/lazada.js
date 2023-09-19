@@ -34,7 +34,7 @@ router.route("/refreshToken")
 
 router.route("/callback")
     .get(async (req, res, next) => {
-        await lazadaController.callBack(req, res, next).catch((error) => {
+        await lazadaController.callback(req, res, next).catch((error) => {
             console.error(error);
             return response.res500(res)
         })
@@ -42,7 +42,7 @@ router.route("/callback")
 
 router.route("/callback")
     .post(async (req, res, next) => {
-        await lazadaController.callBack(req, res, next).catch((error) => {
+        await lazadaController.callback(req, res, next).catch((error) => {
             console.error(error);
             return response.res500(res)
         })
