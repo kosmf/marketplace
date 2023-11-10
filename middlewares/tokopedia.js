@@ -41,7 +41,7 @@ exports.getShop = async (req, res, next) => {
   let config = {
     method: "get",
     maxBodyLength: Infinity,
-    url: "https://fs.tokopedia.net/v1/shop/fs/"+FS_ID+"/shop-info",
+    url: "https://fs.tokopedia.net/v1/shop/fs/"+FS_ID+"/shop-info?page=1&per_page=50",
     headers: {
       Authorization: "Bearer "+res.locals.token,
     },

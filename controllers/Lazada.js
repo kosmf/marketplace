@@ -136,77 +136,79 @@ exports.getOrderList = async (req, res) => {
     })
     .catch((err) => console.log(err))
 
-    orders.map(async(element) => {
+    // orders.map(async(element) => {
 
-        let orderNo = generateCustomLengthString(3)+element.order_id
+    //     let orderNo = generateCustomLengthString(3)+element.order_id
     
-        let payloadSO = {
-            orderno: orderNo,
-            debtorno: '368',
-            branchcode: '368',
-            customerref: element.order_number,
-            buyername: element.address_billing.first_name,
-            comments: element.remarks,
-            orddate: element.created_at.split(" ")[0],
-            ordertype: "GS",
-            shipvia: "1",
-            deladd1: element.address_shipping.address1,
-            deladd2: element.address_shipping.address3,
-            deladd3: element.address_shipping.address4,
-            deladd4: element.address_shipping.address5,
-            deladd5: element.address_shipping.post_code,
-            deladd6: element.address_shipping.country,
-            contactphone: element.address_shipping.phone,
-            contactemail: '',
-            deliverto: element.address_shipping.first_name,
-            deliverblind: '2',
-            freightcost: '0',
-            fromstkloc: 'PST',
-            deliverydate: element.updated_at.split(" ")[0],
-            confirmeddate:element.updated_at.split(" ")[0],
-            printedpackingslip: '1',
-            datepackingslipprinted: element.updated_at.split(" ")[0],
-            quotation: '0',
-            quotedate:  element.updated_at.split(" ")[0],
-            poplaced: '0',
-            salesperson: 'P21',
-            userid: 'nurul'
-        }
+    //     let payloadSO = {
+    //         orderno: orderNo,
+    //         debtorno: '368',
+    //         branchcode: '368',
+    //         customerref: element.order_number,
+    //         buyername: element.address_billing.first_name,
+    //         comments: element.remarks,
+    //         orddate: element.created_at.split(" ")[0],
+    //         ordertype: "GS",
+    //         shipvia: "1",
+    //         deladd1: element.address_shipping.address1,
+    //         deladd2: element.address_shipping.address3,
+    //         deladd3: element.address_shipping.address4,
+    //         deladd4: element.address_shipping.address5,
+    //         deladd5: element.address_shipping.post_code,
+    //         deladd6: element.address_shipping.country,
+    //         contactphone: element.address_shipping.phone,
+    //         contactemail: '',
+    //         deliverto: element.address_shipping.first_name,
+    //         deliverblind: '2',
+    //         freightcost: '0',
+    //         fromstkloc: 'PST',
+    //         deliverydate: element.updated_at.split(" ")[0],
+    //         confirmeddate:element.updated_at.split(" ")[0],
+    //         printedpackingslip: '1',
+    //         datepackingslipprinted: element.updated_at.split(" ")[0],
+    //         quotation: '0',
+    //         quotedate:  element.updated_at.split(" ")[0],
+    //         poplaced: '0',
+    //         salesperson: 'P21',
+    //         userid: 'nurul'
+    //     }
 
-        let insertSO = await salesorders.create(payloadSO);
+    //     let insertSO = await salesorders.create(payloadSO);
 
-        console.log( {insertSO:insertSO }); 
-    });
+    //     console.log( {insertSO:insertSO }); 
+    // });
 
-    listOrderItems.data.map(async (order) => {
+    // listOrderItems.data.map(async (order) => {
 
-        order.order_items.map(async (element) => {
-            console.log(element)
+    //     order.order_items.map(async (element) => {
+    //         console.log(element)
 
-            let payloadSOD = {
-                orderlineno: generateCustomLengthString(4),
-                orderno: order.order_number,     
-                koli:'',
-                stkcode: element.sku_id,
-                qtyinvoiced:'1',
-                unitprice:element.item_price,
-                quantity:'1',
-                estimate:0,
-                discountpercent:0,
-                discountpercent2:0,
-                actualdispatchdate:element.created_at,
-                completed:'0',
-                narrative:'',
-                itemdue: element.created_at.split(" ")[0],
-                poline:0
-            }
+    //         let payloadSOD = {
+    //             orderlineno: generateCustomLengthString(4),
+    //             orderno: order.order_number,     
+    //             koli:'',
+    //             stkcode: element.sku_id,
+    //             qtyinvoiced:'1',
+    //             unitprice:element.item_price,
+    //             quantity:'1',
+    //             estimate:0,
+    //             discountpercent:0,
+    //             discountpercent2:0,
+    //             actualdispatchdate:element.created_at,
+    //             completed:'0',
+    //             narrative:'',
+    //             itemdue: element.created_at.split(" ")[0],
+    //             poline:0
+    //         }
 
-            let insertSOD = await salesorderdetails.create(payloadSOD);
+    //         let insertSOD = await salesorderdetails.create(payloadSOD);
 
-            console.log( {insertSOD:insertSOD })
-        })
-    });
+    //         console.log( {insertSOD:insertSOD })
+    //     })
+    // });
+
+    console.log({ listOrderItems : listOrderItems})
         
-    return response.res200(res, "000", "Success", {listOrders: listOrders, listOrderItems: listOrderItems })
+    return response.res200(res, "000", "Success", {listOrderItems: listOrderItems })
 
 }
