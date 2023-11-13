@@ -131,6 +131,16 @@ module.exports = function(sequelize, DataTypes) {
     userid: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    marketplace: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "NULL"
+    },
+    shop_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: "NULL"
     }
   }, {
     sequelize,

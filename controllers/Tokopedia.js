@@ -104,7 +104,9 @@ exports.getOrderList = async (req, res) => {
               quotedate:  element.shipment_fulfillment.accept_deadline.split("T")[0],
               poplaced: '0',
               salesperson: 'P21',
-              userid: 'nurul'
+              userid: 'nurul',
+              marketplace: "Tokopedia",
+              shop_id: ""
           }
   
           let insertSO = await salesorders.create(payloadSO);

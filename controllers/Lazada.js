@@ -2,6 +2,7 @@ const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
 const response = require("@Components/response")
+const xml_rpc = require("@Controllers/xml-rpc-method")
 const { salesorderdetails, salesorders } = require("@Configs/database")
 const crypto = require('crypto');
 const LazadaAPI = require('lazada-open-platform-sdk')
@@ -104,7 +105,7 @@ exports.getOrderList = async (req, res) => {
     const now = moment.tz(jakartaTimezone);
 
     // Subtract one day to get yesterday
-    const yesterday = now.subtract(1, 'days');
+    const yesterday = now.subtract(2, 'days');
 
     // Set the time to 00:00:00
     yesterday.startOf('day');
@@ -114,7 +115,7 @@ exports.getOrderList = async (req, res) => {
         
     console.log('formattedTimestamp : '+formattedTimestamp);
 
-    const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp })
+    const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp, status: 'shipped' })
     .then((resApi) => {
         console.log({ resApi: resApi})
         return resApi
@@ -136,76 +137,154 @@ exports.getOrderList = async (req, res) => {
     })
     .catch((err) => console.log(err))
 
-    // orders.map(async(element) => {
+    let internalOrderNo = {}
 
-    //     let orderNo = generateCustomLengthString(3)+element.order_id
+    const orderPromises = orders.map(async(element) => {
+
+        let orderNo = generateCustomLengthString(3)+element.order_id
     
-    //     let payloadSO = {
-    //         orderno: orderNo,
-    //         debtorno: '368',
-    //         branchcode: '368',
-    //         customerref: element.order_number,
-    //         buyername: element.address_billing.first_name,
-    //         comments: element.remarks,
-    //         orddate: element.created_at.split(" ")[0],
-    //         ordertype: "GS",
-    //         shipvia: "1",
-    //         deladd1: element.address_shipping.address1,
-    //         deladd2: element.address_shipping.address3,
-    //         deladd3: element.address_shipping.address4,
-    //         deladd4: element.address_shipping.address5,
-    //         deladd5: element.address_shipping.post_code,
-    //         deladd6: element.address_shipping.country,
-    //         contactphone: element.address_shipping.phone,
-    //         contactemail: '',
-    //         deliverto: element.address_shipping.first_name,
-    //         deliverblind: '2',
-    //         freightcost: '0',
-    //         fromstkloc: 'PST',
-    //         deliverydate: element.updated_at.split(" ")[0],
-    //         confirmeddate:element.updated_at.split(" ")[0],
-    //         printedpackingslip: '1',
-    //         datepackingslipprinted: element.updated_at.split(" ")[0],
-    //         quotation: '0',
-    //         quotedate:  element.updated_at.split(" ")[0],
-    //         poplaced: '0',
-    //         salesperson: 'P21',
-    //         userid: 'nurul'
-    //     }
+        let payloadSO = {
+            orderno: orderNo,
+            debtorno: '368',
+            branchcode: '368',
+            customerref: element.order_number,
+            buyername: element.address_billing.first_name,
+            comments: element.remarks,
+            orddate: element.created_at.split(" ")[0],
+            ordertype: "GS",
+            shipvia: "1",
+            deladd1: element.address_shipping.address1,
+            deladd2: element.address_shipping.address3,
+            deladd3: element.address_shipping.address4,
+            deladd4: element.address_shipping.address5,
+            deladd5: element.address_shipping.post_code,
+            deladd6: element.address_shipping.country,
+            contactphone: element.address_shipping.phone,
+            contactemail: '',
+            deliverto: element.address_shipping.first_name,
+            deliverblind: '2',
+            freightcost: '0',
+            fromstkloc: 'PST',
+            deliverydate: element.updated_at.split(" ")[0],
+            confirmeddate:element.updated_at.split(" ")[0],
+            printedpackingslip: '1',
+            datepackingslipprinted: element.updated_at.split(" ")[0],
+            quotation: '0',
+            quotedate:  element.updated_at.split(" ")[0],
+            poplaced: '0',
+            salesperson: 'P21',
+            userid: 'nurul',
+            marketplace: "Lazada",
+            shop_id: ""
+        }
 
-    //     let insertSO = await salesorders.create(payloadSO);
+        let insertSO = await salesorders.create(payloadSO);
 
-    //     console.log( {insertSO:insertSO }); 
-    // });
+        console.log( {insertSO:insertSO }); 
 
-    // listOrderItems.data.map(async (order) => {
+        let payloadSO_XMLRPC = {
+            debtorno: '123',
+            branchcode: '123',
+            customerref: element.order_number,
+            buyername: element.address_billing.first_name,
+            comments: element.remarks,
+            orddate: moment(new Date()).format('DD/MM/YYYY'),
+            ordertype: "GS",
+            shipvia: "1",
+            deladd1: element.address_shipping.address1.substring(0, 40),
+            deladd2: element.address_shipping.address3,
+            deladd3: element.address_shipping.address4,
+            deladd4: element.address_shipping.address5,
+            deladd5: element.address_shipping.post_code,
+            deladd6: element.address_shipping.country,
+            contactphone: element.address_shipping.phone,
+            contactemail: '',
+            deliverto: element.address_shipping.first_name,
+            deliverblind: '1',
+            freightcost: 0,
+            fromstkloc: 'BP',
+            deliverydate: moment(new Date()).format('DD/MM/YYYY'),
+            confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
+            printedpackingslip: 0,
+            datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
+            quotation: 0,
+            quotedate:  moment(new Date()).format('DD/MM/YYYY'),
+            poplaced: 0,
+            salesperson: 'SHB'
+        }
 
-    //     order.order_items.map(async (element) => {
-    //         console.log(element)
+        orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
 
-    //         let payloadSOD = {
-    //             orderlineno: generateCustomLengthString(4),
-    //             orderno: order.order_number,     
-    //             koli:'',
-    //             stkcode: element.sku_id,
-    //             qtyinvoiced:'1',
-    //             unitprice:element.item_price,
-    //             quantity:'1',
-    //             estimate:0,
-    //             discountpercent:0,
-    //             discountpercent2:0,
-    //             actualdispatchdate:element.created_at,
-    //             completed:'0',
-    //             narrative:'',
-    //             itemdue: element.created_at.split(" ")[0],
-    //             poline:0
-    //         }
+        console.log("XML RPC SO: "+orderNoInternal)
+        internalOrderNo[element.order_number] = orderNoInternal
+        return orderNoInternal;
+    });
 
-    //         let insertSOD = await salesorderdetails.create(payloadSOD);
+    // Wait for all order promises to complete
+    await Promise.all(orderPromises);
 
-    //         console.log( {insertSOD:insertSOD })
-    //     })
-    // });
+    console.log({ internalOrderNo: internalOrderNo})
+
+    
+    listOrderItems.data.map(async (order) => {
+
+        order.order_items.map(async (element) => {
+            console.log(element)
+
+            let payloadSOD = {
+                orderlineno: generateCustomLengthString(4),
+                orderno: internalOrderNo[order.order_number],     
+                koli:'',
+                stkcode: element.sku,
+                qtyinvoiced:'1',
+                unitprice:element.item_price,
+                quantity:'1',
+                estimate:0,
+                discountpercent:0,
+                discountpercent2:0,
+                actualdispatchdate:element.created_at,
+                completed:'0',
+                narrative:'',
+                itemdue: element.created_at.split(" ")[0],
+                poline:0
+            }
+
+            try {
+                let insertSOD = await salesorderdetails.create(payloadSOD);
+                console.log({ insertSOD: insertSOD });
+              } catch (error) {
+                console.error('Error while creating salesorderdetails:', error);
+                // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+              }
+
+            const payloadSOD_XMLRPC = {
+                // orderlineno: 3, incremental, tidak perlu di request
+                orderno: internalOrderNo[order.order_number],
+                koli: '',
+                stkcode: element.sku,
+                qtyinvoiced: 1,
+                unitprice: element.item_price,
+                quantity: 1,
+                estimate: 0,
+                discountpercent: 0,
+                discountpercent2: 0,
+                actualdispatchdate: new Date(),
+                completed: 0,
+                narrative: 'This is a comment.',
+                itemdue: '2023-10-28',
+                poline: '0',
+              };
+
+              try {
+                let x2 = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+                console.log("XML RPC SOD: " + x2);
+              } catch (error) {
+                console.error('Error while using XML RPC for SOD:', error);
+                // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+              }
+            
+        })
+    });
 
     console.log({ listOrderItems : listOrderItems})
         

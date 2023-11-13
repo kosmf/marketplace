@@ -3,6 +3,9 @@ const crypto = require('crypto');
 const response = require("@Components/response")
 const { salesorderdetails, salesorders } = require("@Configs/database")
 const moment = require('moment');
+const fs = require('fs').promises;
+const xml_rpc = require("@Controllers/xml-rpc-method")
+const path = require('path');
 const { FS_ID, SHOP_ID, SHOPEE_CODE } = process.env
 
 const host = 'https://partner.shopeemobile.com';
@@ -11,21 +14,62 @@ const partnerKey = '644c6d6f4675576c646f7079616f51655052757643484a7876636c437a70
 const shopId = 308454744;
 const merchantId = 1234567;
 
+const baseDirectory = path.join(__dirname, '../token/shopee'); // Define the absolute directory path
+
+
 const generateCustomLengthString = (length) => {
-    if (length <= 0) {
-        throw new Error('Length must be a positive integer');
+  if (length <= 0) {
+      throw new Error('Length must be a positive integer');
+  }
+
+  const characters = '0123456789';
+  // const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+
+  for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      result += characters.charAt(randomIndex);
+  }
+
+  return result;
+}
+
+async function writeFileAsync(fileName, content) {
+
+  const filePath = path.join(baseDirectory, fileName); // Combine the directory path with the file name
+
+  try {
+    // Create the directory if it doesn't exist
+    await fs.mkdir(baseDirectory, { recursive: true });
+
+    await fs.writeFile(filePath, content);
+    console.log('Token Shopee has been written successfully.');
+  } catch (err) {
+    console.error('Error writing to file:', err);
+  }
+}
+
+async function readFileAsync(fileName) {
+    const filePath = path.join(baseDirectory, fileName); // Use the absolute file path
+  
+    try {
+      const fileContent = await fs.readFile(filePath, 'utf-8');
+      console.log(`Contents of ${fileName}:`);
+      console.log(fileContent);
+  
+      // Return the file content
+      return fileContent;
+    } catch (err) {
+      console.error(`Error reading ${fileName}:`, err);
+      return null; // Return null in case of an error
     }
+}
 
-    const characters = '0123456789';
-    // const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
+const generateSign = (baseString) => {
+  return crypto
+  .createHmac('sha256', partnerKey)
+  .update(baseString)
+  .digest('hex');
 }
 
 // Function to get Token
@@ -62,6 +106,9 @@ exports.getToken = async (req, res) => {
     const newRefreshToken = data.refresh_token;
     console.log(`access_token: ${accessToken}, refresh_token: ${newRefreshToken}, raw: ${JSON.stringify(data)}`);
 
+    writeFileAsync('token.txt', data.access_token);
+    writeFileAsync('refresh_token.txt', data.refresh_token);
+
     return response.res200(res, "000", "GET TOKEN SUCCESS", data);
 
   } catch (error) {
@@ -92,6 +139,7 @@ exports.getToken = async (req, res) => {
 
 // Function refresh Token
 exports.refreshToken = async (req, res) => {
+  const refreshTokenContent = await readFileAsync('refresh_token.txt');
 
   console.log( { tokenShopee: res.locals.tokenShopee })
 
@@ -99,7 +147,7 @@ exports.refreshToken = async (req, res) => {
   const timest = Math.floor(Date.now() / 1000);
 
   const body = {
-    refresh_token: '637961636b7243704c69767755437051',
+    refresh_token: refreshTokenContent,
     shop_id: shopId,
     partner_id: partnerId,
   };
@@ -125,6 +173,9 @@ exports.refreshToken = async (req, res) => {
     const accessToken = data.access_token;
     const newRefreshToken = data.refresh_token;
     console.log(`access_token: ${accessToken}, refresh_token: ${newRefreshToken}, raw: ${JSON.stringify(data)}`);
+
+    writeFileAsync('token.txt', data.access_token);
+    writeFileAsync('refresh_token.txt', data.refresh_token);
 
     return response.res200(res, "000", "GET TOKEN SUCCESS", data);
 
@@ -154,42 +205,260 @@ exports.refreshToken = async (req, res) => {
   }
 }
 
+exports.getOrderList = async (req, res) => {
 
-// Function to make API requests
-async function makeRequest(path, params, method = 'GET') {
+  const tokenAccess = await readFileAsync('token.txt');
 
-  const timest = Math.floor(Date.now() / 1000);
-  const accessToken = '73626563416350597a584d4264775270';
+  let orderList = []
 
-  const baseString = `${partnerId}${path}${timest}${accessToken}${params}`;
-  const sign = crypto
-    .createHmac('sha256', partnerKey)
-    .update(baseString)
-    .digest('hex');
+  // Get current date
+  const currentDate = moment();
+  
+  // Calculate yesterday's date
+  const yesterdayDate = currentDate.clone().subtract(2, 'day');
+  
+  // Set the time to 00:00:00 for yesterday
+  const fromTime = yesterdayDate.startOf('day').unix();
+  
+  // Set the time to 23:59:59 for yesterday
+  const toTime = yesterdayDate.endOf('day').unix();
 
-  const url = `${host}${path}?partner_id=${partnerId}&timestamp=${timest}&access_token=${accessToken}&sign=${sign}${params}`;
+  const timestamp = Math.floor(Date.now() / 1000)
+  const time_range_field = 'create_time'
+  
+  console.log('moment : '+currentDate);
+  console.log('Unix timestamp for from_date (00:00):', fromTime);
+  console.log('Unix timestamp for to_date (23:59):', toTime);
 
-  const headers = {
-    'Content-Type': 'application/json',
-  };  
+  // Call public API
+  const publicPath = '/api/v2/order/get_order_list';
+  const publicParams = `&shop_id=${shopId}&time_range_field=${time_range_field}&time_from=${fromTime}&time_to=${toTime}&page_size=${20}&order_status=SHIPPED`;
 
-  const requestOptions = {
-    method,
-    url,
-    headers,
-  };
+  console.log('public params: '+publicParams)
 
-  console.log({ reqConfig: requestOptions })
-  try {
-    const response = await axios.request(requestOptions);
-    return response.data;
-  } catch (error) {
-    console.log(error.config);
-    throw error;
-  }
+  const baseString = `${partnerId}${publicPath}${timestamp}${tokenAccess}${shopId}`;
+  
+  const sign = generateSign(baseString);
+
+  const url = `${host}${publicPath}?partner_id=${partnerId}&sign=${sign}&timestamp=${timestamp}&access_token=${tokenAccess}${publicParams}`;
+
+  return await axios.get(url).then(async ({ data: responseApi}) => {
+    // console.log({ response: responseApi})
+
+    orderList.push(...responseApi.response.order_list);
+
+    // console.log({ arrayLength: orderList.length, orderList: orderList})
+
+    let cursor = responseApi.response.next_cursor;
+
+    while (responseApi.response.more){
+      let nextParams = publicParams+'&cursor='+cursor
+      let nextUrl = `${host}${publicPath}?partner_id=${partnerId}&sign=${sign}&timestamp=${timestamp}&access_token=${tokenAccess}${nextParams}`;
+
+      let nextCursor = await axios.get(nextUrl).then(async ({ data: responseNext}) => {
+        console.log({ nextPage: responseNext})
+
+        orderList.push(...responseNext.response.order_list);
+
+        if(!responseNext.response.more) return 0;
+
+        cursor = responseNext.response.next_cursor
+        return cursor;
+      })
+      .catch(error => {
+        // The request failed
+        console.error('Next Page:', error);
+        return 0;
+      });
+      console.log({ valueNextCursor : nextCursor})
+
+      if(!nextCursor) break;
+    }
+
+    // return response.res200(res, "000", "OrderList Success", { count: orderList.length, orderList: orderList})
+
+    /**     ORDER DETAIL     */
+
+    // Delete the object and transform to string value order_sn only
+    orderList = orderList.map(item => item.order_sn);
+    orderList = orderList.slice(0, 20);
+
+    let orderDetails = []
+
+    for (let i = 0; i < orderList.length/45; i++) {
+      console.log(" Loop "+(i+1));
+      const extractedString = orderList.slice((i*45), ((i*45)+45)).join(',');
+
+      console.log("extractedString : "+extractedString)
+
+      if(extractedString){
+        let getDetails = await orderDetail(extractedString);
+        orderDetails.push(...getDetails);
+  
+        console.log(orderDetails);
+      } 
+    }
+
+    /**     Save to DB & XML RPC    */
+
+    let internalOrderNo = {}
+
+    const orderPromises = orderDetails.map(async(element) => {
+
+      let orderNo = generateCustomLengthString(10)
+  
+      let payloadSO = {
+          orderno: orderNo,
+          debtorno: '123',
+          branchcode: '123',
+          customerref: element.order_sn,
+          buyername: element.buyer_username,
+          comments: element.note,
+          orddate: moment.unix(element.create_time).format('YYYY-MM-DD'),
+          ordertype: "GS",
+          shipvia: "1",
+          deladd1: element.recipient_address.full_address,
+          deladd2: element.recipient_address.district,
+          deladd3: element.recipient_address.city,
+          deladd4: element.recipient_address.state,
+          deladd5: element.recipient_address.zipcode,
+          deladd6: element.recipient_address.region,
+          contactphone: element.recipient_address.phone,
+          contactemail: '',
+          deliverto: element.recipient_address.name,
+          deliverblind: '1',
+          freightcost: '0',
+          fromstkloc: 'BP',
+          deliverydate: moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
+          confirmeddate:moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
+          printedpackingslip: '0',
+          datepackingslipprinted: moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
+          quotation: '0',
+          quotedate:  moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
+          poplaced: '0',
+          salesperson: 'SHB',
+          userid: 'nurul',
+          marketplace: "Shopee",
+          shop_id: shopId
+      }
+
+      let insertSO = await salesorders.create(payloadSO);
+
+      console.log( {insertSO:insertSO }); 
+
+      let payloadSO_XMLRPC = {
+          debtorno: '123',
+          branchcode: '123',
+          customerref: element.order_sn,
+          buyername: element.buyer_username,
+          comments: element.note,
+          orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
+          ordertype: "GS",
+          shipvia: "1",
+          deladd1: element.recipient_address.full_address.substring(0, 40),
+          deladd2: element.recipient_address.district,
+          deladd3: element.recipient_address.city,
+          deladd4: element.recipient_address.state,
+          deladd5: element.recipient_address.zipcode,
+          deladd6: element.recipient_address.region,
+          contactphone: element.recipient_address.phone,
+          contactemail: '',
+          deliverto: element.recipient_address.name,
+          deliverblind: '1',
+          freightcost: 0,
+          fromstkloc: 'BP',
+          deliverydate: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+          confirmeddate:moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+          printedpackingslip: 0,
+          datepackingslipprinted: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+          quotation: 0,
+          quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+          poplaced: 0,
+          salesperson: 'SHB'
+      }
+
+      orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+
+      console.log("XML RPC SO: "+orderNoInternal)
+      internalOrderNo[element.order_sn] = orderNoInternal
+      return orderNoInternal;
+    });
+
+    // Wait for all order promises to complete
+    await Promise.all(orderPromises);
+
+    console.log({ internalOrderNo: internalOrderNo})
+
+    orderDetails.map(async(order) => {
+
+      order.map(async(element) => {
+        let payloadSOD = {
+          orderlineno: generateCustomLengthString(4),
+          orderno: internalOrderNo[order.order_sn],     
+          koli:'',
+          stkcode: element.model_sku,
+          qtyinvoiced:'1',
+          unitprice:element.model_discounted_price,
+          quantity:'1',
+          estimate:0,
+          discountpercent:0,
+          discountpercent2:0,
+          actualdispatchdate:element.created_at,
+          completed:'0',
+          narrative:'',
+          itemdue: element.created_at.split(" ")[0],
+          poline:0
+        }
+      
+        try {
+          let insertSOD = await salesorderdetails.create(payloadSOD);
+          console.log({ insertSOD: insertSOD });
+        } catch (error) {
+          console.error('Error while creating salesorderdetails:', error);
+          // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+        }
+      
+        const payloadSOD_XMLRPC = {
+            // orderlineno: 3, incremental, tidak perlu di request
+            orderno: internalOrderNo[order.order_sn],
+            koli: '',
+            stkcode: element.model_sku,
+            qtyinvoiced: 1,
+            unitprice: element.model_discounted_price,
+            quantity: element.model_quantity_purchased,
+            estimate: 0,
+            discountpercent: 0,
+            discountpercent2: 0,
+            actualdispatchdate: new Date(),
+            completed: 0,
+            narrative: 'This is a comment.',
+            itemdue: '2023-10-28',
+            poline: '0',
+          };
+        
+          try {
+            let x2 = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+            console.log("XML RPC SOD: " + x2);
+          } catch (error) {
+            console.error('Error while using XML RPC for SOD:', error);
+            // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+          }
+        })
+      })
+
+    return response.res200(res, "000", "OrderList Success", { count: orderList.length, orderList: orderList, orderDetails:orderDetails })
+  })
+  .catch(error => {
+    // The request failed
+    console.error('GET request failed:', error);
+    return response.res200(res, "000", "OrderList Failed", { error: error.response.data})
+  });
+
 }
 
-exports.getOrderList = async (req, res) => {
+const orderDetail = async (sn_list) => {
+
+  const tokenAccess = await readFileAsync('token.txt');
 
   // Get current date
   const currentDate = moment();
@@ -203,363 +472,82 @@ exports.getOrderList = async (req, res) => {
   // Set the time to 23:59:59 for yesterday
   const toTime = yesterdayDate.endOf('day').unix();
 
-  const timeNow = new Date();
+  const timestamp = Math.floor(Date.now() / 1000)
+  const time_range_field = 'create_time'
+  
+  // console.log('moment : '+currentDate);
+  // console.log('Unix timestamp for from_date (00:00):', fromTime);
+  // console.log('Unix timestamp for to_date (23:59):', toTime);
+
+  // Call public API
+  const publicPath = '/api/v2/order/get_order_detail';
+  const publicParams = `&shop_id=${shopId}&order_sn_list=${sn_list}&response_optional_fields=buyer_user_id,buyer_username,estimated_shipping_fee,recipient_address,actual_shipping_fee ,goods_to_declare,note,note_update_time,item_list,pay_time,dropshipper,dropshipper_phone,split_up,buyer_cancel_reason,cancel_by,cancel_reason,actual_shipping_fee_confirmed,buyer_cpf_id,fulfillment_flag,pickup_done_time,package_list,shipping_carrier,payment_method,total_amount,buyer_username,invoice_data, checkout_shipping_carrier, reverse_shipping_fee, order_chargeable_weight_gram, edt, prescription_images, prescription_check_status`;
+
+  // console.log('public params: '+publicParams)
+
+  const baseString = `${partnerId}${publicPath}${timestamp}${tokenAccess}${shopId}`;
+  
+  const sign = generateSign(baseString);
+
+  const url = `${host}${publicPath}?partner_id=${partnerId}&sign=${sign}&timestamp=${timestamp}&access_token=${tokenAccess}${publicParams}`;
+
+  return await axios.get(url).then(({ data: responseApi}) => {
+    // console.log({ orderDetail: responseApi})
+    return responseApi.response.order_list
+  })
+  .catch(error => {
+    // The request failed
+    console.error('GET request failed:', error);
+    return response.res200(res, "000", "OrderDetail Failed", { error: error.response.data})
+  });
+
+}
+
+exports.getOrderDetail = async (req, res) => {
+
+  const tokenAccess = await readFileAsync('token.txt');
+
+  let orderList = []
+
+  // Get current date
+  const currentDate = moment();
+  
+  // Calculate yesterday's date
+  const yesterdayDate = currentDate.clone().subtract(1, 'day');
+  
+  // Set the time to 00:00:00 for yesterday
+  const fromTime = yesterdayDate.startOf('day').unix();
+  
+  // Set the time to 23:59:59 for yesterday
+  const toTime = yesterdayDate.endOf('day').unix();
+
+  const timestamp = Math.floor(Date.now() / 1000)
+  const time_range_field = 'create_time'
   
   console.log('moment : '+currentDate);
   console.log('Unix timestamp for from_date (00:00):', fromTime);
   console.log('Unix timestamp for to_date (23:59):', toTime);
 
   // Call public API
-  const publicPath = '/api/v2/order/get_order_list';
-  const publicParams = `&shop_id=${shopId}&time_range_field=${timeNow}&time_from=${yesterdayDate}&time_to=${currentDate}&page_size=${20}`;
-  makeRequest(publicPath, publicParams) 
-    .then((resApi) => {
-      console.log('Public API Response:', resApi);
-      return response.res200(res, "000", "Generate Success", { fromTime:fromTime, toTime: toTime, currentDate: currentDate,yesterdayDate: yesterdayDate, resApi: resApi })
-    })
-    .catch((error) => {
-      
-    console.log(error.config);
+  const publicPath = '/api/v2/order/get_order_detail';
+  const publicParams = `&shop_id=${shopId}&order_sn_list=231111AVBFA6MJ&response_optional_fields=buyer_user_id,buyer_username,estimated_shipping_fee,recipient_address,actual_shipping_fee ,goods_to_declare,note,note_update_time,item_list,pay_time,dropshipper,dropshipper_phone,split_up,buyer_cancel_reason,cancel_by,cancel_reason,actual_shipping_fee_confirmed,buyer_cpf_id,fulfillment_flag,pickup_done_time,package_list,shipping_carrier,payment_method,total_amount,buyer_username,invoice_data, checkout_shipping_carrier, reverse_shipping_fee, order_chargeable_weight_gram, edt, prescription_images, prescription_check_status`;
 
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.log(error.response.data);
-      console.log(error.response.status);
-      console.log(error.response.headers);
+  console.log('public params: '+publicParams)
 
-      return response.res200(res, "001", "GET TOKEN FAILED", { error: error.response.data });
-    } else if (error.request) {
-      // The request was made but no response was received
-      // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-      // http.ClientRequest in node.js
-      console.log(error.request);
-      return response.res200(res, "001", "GET TOKEN FAILED", { error: error.request });
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.log('Error', error.message);
-      return response.res200(res, "001", "GET TOKEN FAILED", { error: error.message });
-    }
-    });
-
+  const baseString = `${partnerId}${publicPath}${timestamp}${tokenAccess}${shopId}`;
   
+  const sign = generateSign(baseString);
+
+  const url = `${host}${publicPath}?partner_id=${partnerId}&sign=${sign}&timestamp=${timestamp}&access_token=${tokenAccess}${publicParams}`;
+
+  return await axios.get(url).then((responseApi) => {
+    console.log({ response: responseApi.data})
+    return response.res200(res, "000", "OrderDetail Success", responseApi.data)
+  })
+  .catch(error => {
+    // The request failed
+    console.error('GET request failed:', error);
+    return response.res200(res, "000", "OrderDetail Failed", { error: error.response.data})
+  });
 
 }
-
-// exports.getToken = (req, res) => {
-//   const shopPath = '/api/v2/auth/token/get';
-//   const shopParams = `&shop_id=${shopId}`;
-
-//   makeRequest(shopPath, shopParams)
-//     .then((data) => {
-//       console.log('Shop Level API Response:', data);
-//     })
-//     .catch((error) => {
-//       console.error('Shop Level API Error:', error);
-//     });
-// }
-
-// exports.getOrderList = async (req, res) => {
-
-//     // Get current date
-//     const currentDate = moment();
-    
-//     // Calculate yesterday's date
-//     const yesterdayDate = currentDate.clone().subtract(1, 'day');
-    
-//     // Set the time to 00:00:00 for yesterday
-//     const fromTime = yesterdayDate.startOf('day').unix();
-    
-//     // Set the time to 23:59:59 for yesterday
-//     const toTime = yesterdayDate.endOf('day').unix();
-    
-//     console.log('Unix timestamp for from_date (00:00):', fromTime);
-//     console.log('Unix timestamp for to_date (23:59):', toTime);
-
-//     const exampleRes = {
-//       error: "",
-//       message: "",
-//       response: {
-//         order_list: [
-//           {
-//             checkout_shipping_carrier: null,
-//             reverse_shipping_fee: null,
-//             actual_shipping_fee: null,
-//             actual_shipping_fee_confirmed: false,
-//             buyer_cancel_reason: "",
-//             buyer_cpf_id: null,
-//             buyer_user_id: 258065,
-//             buyer_username: "drcbuy_uat_sg_1",
-//             cancel_by: "",
-//             cancel_reason: "",
-//             cod: false,
-//             create_time: 1632973421,
-//             currency: "SGD",
-//             days_to_ship: 3,
-//             dropshipper: "",
-//             dropshipper_phone: "",
-//             estimated_shipping_fee: 3.99,
-//             fulfillment_flag: "fulfilled_by_local_seller",
-//             goods_to_declare: false,
-//             invoice_data: null,
-//             item_list: [
-//               {
-//                 item_id: 101513055,
-//                 item_name: "Vitamin Bottles - Acc",
-//                 item_sku: "",
-//                 model_id: 0,
-//                 model_name: "",
-//                 model_sku: "",
-//                 model_quantity_purchased: 1,
-//                 model_original_price: 3000,
-//                 model_discounted_price: 3000,
-//                 wholesale: false,
-//                 weight: 0.3,
-//                 add_on_deal: false,
-//                 main_item: false,
-//                 add_on_deal_id: 0,
-//                 promotion_type: "",
-//                 promotion_id: 0,
-//                 order_item_id: 101513055,
-//                 promotion_group_id: 0,
-//                 image_info: {
-//                   image_url:
-//                     "https://cf.shopee.sg/file/fe05b113170c5e97ed515cf0f2fb9c0e_tn",
-//                 },
-//                 product_location_id: ["IDL", "IDG"],
-//               },
-//             ],
-//             message_to_seller: "",
-//             note: "",
-//             note_update_time: 0,
-//             order_sn: "210930KJDNF06T",
-//             order_status: "COMPLETED",
-//             package_list: [
-//               {
-//                 package_number: "OFG86672620092786",
-//                 logistics_status: "LOGISTICS_DELIVERY_DONE",
-//                 shipping_carrier: "Singpost POPstation - LPS (seller)",
-//                 item_list: [
-//                   {
-//                     item_id: 101513055,
-//                     model_id: 0,
-//                     model_quantity: 1,
-//                   },
-//                 ],
-//               },
-//             ],
-//             pay_time: 1632973437,
-//             payment_method: "Credit/Debit Card",
-//             pickup_done_time: 1632973711,
-//             recipient_address: {
-//               name: "Buyer",
-//               phone: "163297371110",
-//               town: "town",
-//               district: "district",
-//               city: "city",
-//               state: "state",
-//               region: "SG",
-//               zipcode: "820116",
-//               full_address: "BLOCK 116, EDGEFIELD PLAINS, #05-334, SG, 820116",
-//             },
-//             region: "SG",
-//             reverse_shipping_fee: 0,
-//             ship_by_date: 1633405439,
-//             shipping_carrier: "Singpost POPstation - LPS (seller)",
-//             split_up: false,
-//             total_amount: 2988.99,
-//             update_time: 1633001809,
-//           },
-//         ],
-//       },
-//       request_id: "971b45d6a002bfc680019320c9a685a0",
-//     };
-
-//     exampleRes["response"]["order_list"].map(async (element) => {
-//       console.log(element)
-
-//       let orderNo = generateCustomLengthString(10)
-
-//       let payloadSO = {
-//           orderno: orderNo,
-//           debtorno: '368',
-//           branchcode: '368',
-//           customerref: element.order_sn,
-//           buyername: element.buyer_username,
-//           comments: element.request_id,
-//           orddate: moment(element.create_time).format('YYYY-MM-DD'),
-//           ordertype: "GS",
-//           shipvia: "1",
-//           deladd1: element.recipient_address.full_address,
-//           deladd2: element.recipient_address.district,
-//           deladd3: element.recipient_address.city,
-//           deladd4: element.recipient_address.state,
-//           deladd5: element.recipient_address.zipcode,
-//           deladd6: element.recipient_address.region,
-//           contactphone: element.recipient_address.phone,
-//           contactemail: 'FishingZone@gmail.com',
-//           deliverto: 'Fishing Zone',
-//           deliverblind: '2',
-//           freightcost: '0',
-//           fromstkloc: 'PST',
-//           deliverydate: moment(element.ship_by_date).format('YYYY-MM-DD'),
-//           confirmeddate: moment(element.pickup_done_time).format('YYYY-MM-DD'),
-//           printedpackingslip: '1',
-//           datepackingslipprinted: moment(element.ship_by_date).format('YYYY-MM-DD'),
-//           quotation: '0',
-//           quotedate:  moment(element.ship_by_date).format('YYYY-MM-DD'),
-//           poplaced: '0',
-//           salesperson: 'P21',
-//           userid: element.buyer_user_id
-//       }
-
-//       let insertSO = await salesorders.create(payloadSO);
-
-//       console.log( {insertSO:insertSO });
-
-//       let i = 1;
-  
-//       element.item_list.map(async(product) => {
-//           console.log(product)
-//           let payloadSOD = {
-//               orderlineno: generateCustomLengthString(4),
-//               orderno: orderNo,     
-//               koli:'',
-//               stkcode: product.item_id,
-//               qtyinvoiced:'1',
-//               unitprice:product.model_original_price,
-//               quantity:product.model_quantity_purchased,
-//               estimate:0,
-//               discountpercent:(parseInt(product.model_discounted_price)/(+product.model_original_price*+product.model_quantity_purchased))*100,
-//               discountpercent2:0,
-//               actualdispatchdate: moment(element.pickup_done_time).format('YYYY-MM-DD'),
-//               completed:'0',
-//               narrative:'',
-//               itemdue: moment(element.ship_by_date).format('YYYY-MM-DD'),
-//               poline:0,
-//           }
-      
-//           let insertSOD = await salesorderdetails.create(payloadSOD);
-
-//           console.log( {insertSOD:insertSOD })
-//           i++;
-//       })
-//   })
-
-//   response.res200(res, "000", "Generate Success", { fromTime:fromTime, toTime: toTime, response: exampleRes })
-
-//   // let config = {
-//   //     method: 'get',
-//   //     maxBodyLength: Infinity,
-//   //     url: 'https://fs.tokopedia.net/v2/order/list?fs_id='+FS_ID+'&shop_id='+SHOP_ID+'&from_date='+fromTime+'&to_date='+toTime+'&page=1&per_page=10000000',
-//   //     headers: { 
-//   //       'Authorization': 'Bearer '+res.locals.token
-//   //     }
-//   //   };
-    
-//   // return await axios.request(config)
-//   //   .then(async(resApi) => {
-
-//   //     console.log(JSON.stringify(resApi.data));
-//   //     resApi["data"].data.map(async (element) => {
-//   //         console.log(element)
-  
-//   //         let orderNo = generateCustomLengthString(10)+element.order_id
-  
-//   //         let payloadSO = {
-//   //             orderno: orderNo,
-//   //             debtorno: '368',
-//   //             branchcode: '368',
-//   //             customerref: element.payment_id,
-//   //             buyername: element.buyer.name,
-//   //             comments: element.invoice_ref_num,
-//   //             orddate: element.payment_date.split("T")[0],
-//   //             ordertype: "GS",
-//   //             shipvia: "1",
-//   //             deladd1: element.recipient.address.address_full,
-//   //             deladd2: element.recipient.address.district,
-//   //             deladd3: element.recipient.address.city,
-//   //             deladd4: element.recipient.address.province,
-//   //             deladd5: element.recipient.address.postal_code,
-//   //             deladd6: element.recipient.address.country,
-//   //             contactphone: element.recipient.phone,
-//   //             contactemail: 'FishingZone@gmail.com',
-//   //             deliverto: 'Fishing Zone',
-//   //             deliverblind: '2',
-//   //             freightcost: '0',
-//   //             fromstkloc: 'PST',
-//   //             deliverydate: element.shipment_fulfillment.accept_deadline.split("T")[0],
-//   //             confirmeddate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
-//   //             printedpackingslip: '1',
-//   //             datepackingslipprinted: element.shipment_fulfillment.accept_deadline.split("T")[0],
-//   //             quotation: '0',
-//   //             quotedate:  element.shipment_fulfillment.accept_deadline.split("T")[0],
-//   //             poplaced: '0',
-//   //             salesperson: 'P21',
-//   //             userid: 'nurul'
-//   //         }
-  
-//   //         let insertSO = await salesorders.create(payloadSO);
-  
-//   //         console.log( {insertSO:insertSO });
-  
-//   //         let i = 1;
-      
-//   //         element.products.map(async(product) => {
-//   //             console.log(product)
-//   //             let payloadSOD = {
-//   //                 orderlineno: generateCustomLengthString(4),
-//   //                 orderno: orderNo,     
-//   //                 koli:'',
-//   //                 stkcode: product.id,
-//   //                 qtyinvoiced:'1',
-//   //                 unitprice:product.price,
-//   //                 quantity:product.quantity,
-//   //                 estimate:0,
-//   //                 discountpercent:(parseInt(element.promo_order_detail.total_discount_product)/(+product.price*+product.quantity))*100,
-//   //                 discountpercent2:0,
-//   //                 actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
-//   //                 completed:'0',
-//   //                 narrative:'',
-//   //                 itemdue: element.shipment_fulfillment.accept_deadline.split("T")[0],
-//   //                 poline:0,
-          
-//   //             }
-          
-//   //             let insertSOD = await salesorderdetails.create(payloadSOD);
-  
-//   //             console.log( {insertSOD:insertSOD })
-//   //             i++;
-//   //         })
-//   //     })
-
-//   //     response.res200(res, "000", "Generate Success", { fromTime:fromTime, toTime: toTime, token: res.locals.token, response: resApi.data })
-
-//   //   })
-//   //   .catch((error) => {
-//   //     console.log(error)
-//   //   });
-
-//   // let payload = {
-//   //     orderlineno:'4',
-//   //     orderno:'100005',     
-//   //     koli:'',
-//   //     stkcode:'036282084651',
-//   //     qtyinvoiced:'2',
-//   //     unitprice:'1111',
-//   //     quantity:'2',
-//   //     estimate:'0',
-//   //     discountpercent:'0',
-//   //     discountpercent2:'0',
-//   //     actualdispatchdate: new Date(),
-//   //     completed:'1',
-//   //     narrative:'',
-//   //     itemdue: moment(new Date()).format("YYYY-MM-DD"),
-//   //     poline:0,
-
-//   // }
-
-//   // let insert = await salesorderdetails.create(payload);
-
-//   // response.res200(res, "000", "Generate Success", { fromTime:fromTime, toTime: toTime, insert: insert })
-// }

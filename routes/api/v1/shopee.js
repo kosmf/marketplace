@@ -31,6 +31,13 @@ router.route("/getOrderList")
             return response.res500(res)
         })
     });
+router.route("/getOrderDetail")
+    .get(async (req, res, next) => {
+        await shopeController.getOrderDetail(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
 
 router.all("*", index);
 
