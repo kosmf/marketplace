@@ -44,7 +44,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(2, 'day');
+  const yesterdayDate = currentDate.clone().subtract(12, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
