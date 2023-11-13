@@ -2,6 +2,7 @@ const axios = require('axios');
 const response = require("@Components/response")
 const { salesorderdetails, salesorders } = require("@Configs/database")
 const moment = require('moment');
+const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
 
 const generateCustomLengthString = (length) => {
@@ -76,11 +77,11 @@ exports.getOrderList = async (req, res) => {
   
           let payloadSO = {
               orderno: orderNo,
-              debtorno: '368',
-              branchcode: '368',
-              customerref: element.payment_id,
+              debtorno: '123',
+              branchcode: '123',
+              customerref: element.order_id,
               buyername: element.buyer.name,
-              comments: element.invoice_ref_num,
+              comments: "",
               orddate: element.payment_date.split("T")[0],
               ordertype: "GS",
               shipvia: "1",
@@ -93,9 +94,9 @@ exports.getOrderList = async (req, res) => {
               contactphone: shopInfo.phone,
               contactemail: shopInfo.email,
               deliverto: shopInfo.shop_name,
-              deliverblind: '2',
+              deliverblind: '1',
               freightcost: '0',
-              fromstkloc: 'PST',
+              fromstkloc: 'BP',
               deliverydate: element.shipment_fulfillment.accept_deadline.split("T")[0],
               confirmeddate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
               printedpackingslip: '1',
@@ -106,12 +107,45 @@ exports.getOrderList = async (req, res) => {
               salesperson: 'P21',
               userid: 'nurul',
               marketplace: "Tokopedia",
-              shop_id: ""
+              shop_id: SHOP_ID
           }
   
           let insertSO = await salesorders.create(payloadSO);
   
           console.log( {insertSO:insertSO });
+
+          let payloadSO_XMLRPC = {
+            debtorno: '123',
+            branchcode: '123',
+            customerref: element.order_id,
+            buyername: element.buyer.name,
+            comments: "",
+            orddate: moment(new Date()).format('DD/MM/YYYY'),
+            ordertype: "GS",
+            shipvia: "1",
+            deladd1: element.recipient.address.address_full,
+            deladd2: element.recipient.address.district,
+            deladd3: element.recipient.address.city,
+            deladd4: element.recipient.address.province,
+            deladd5: element.recipient.address.postal_code,
+            deladd6: element.recipient.address.country,
+            contactphone: shopInfo.phone,
+            contactemail: shopInfo.email,
+            deliverto: shopInfo.shop_name,
+            deliverblind: '1',
+            freightcost: 0,
+            fromstkloc: 'BP',
+            deliverydate: moment(new Date()).format('DD/MM/YYYY'),
+            confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
+            printedpackingslip: 0,
+            datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
+            quotation: 0,
+            quotedate:  moment(new Date()).format('DD/MM/YYYY'),
+            poplaced: 0,
+            salesperson: 'SHB'
+          }
+
+          let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
   
           let i = 1;
       
@@ -121,12 +155,12 @@ exports.getOrderList = async (req, res) => {
                   orderlineno: generateCustomLengthString(4),
                   orderno: orderNo,     
                   koli:'',
-                  stkcode: product.id,
+                  stkcode: product.sku,
                   qtyinvoiced:'1',
-                  unitprice:product.price,
+                  unitprice:product.total_price,
                   quantity:product.quantity,
                   estimate:0,
-                  discountpercent:(parseInt(element.promo_order_detail.total_discount_product)/(+product.price*+product.quantity))*100,
+                  discountpercent:0,
                   discountpercent2:0,
                   actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
                   completed:'0',
@@ -139,6 +173,33 @@ exports.getOrderList = async (req, res) => {
               let insertSOD = await salesorderdetails.create(payloadSOD);
   
               console.log( {insertSOD:insertSOD })
+
+              const payloadSOD_XMLRPC = {
+                // orderlineno: 3, incremental, tidak perlu di request
+                orderno: orderNoInternal,
+                koli: '',
+                stkcode: product.sku,
+                qtyinvoiced:'1',
+                unitprice:product.total_price,
+                quantity:product.quantity,
+                estimate:0,
+                discountpercent:0,
+                discountpercent2:0,
+                actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
+                completed:'0',
+                narrative:'',
+                itemdue: '2023-11-13',
+                poline: '0',
+              };
+
+              try {
+                let x2 = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+                console.log("XML RPC SOD: " + x2);
+              } catch (error) {
+                console.error('Error while using XML RPC for SOD:', error);
+                // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+              }
+
               i++;
           })
       })
