@@ -44,7 +44,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(1, 'day');
+  const yesterdayDate = currentDate.clone().subtract(2, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -58,7 +58,7 @@ exports.getOrderList = async (req, res) => {
   let config = {
       method: 'get',
       maxBodyLength: Infinity,
-      url: 'https://fs.tokopedia.net/v2/order/list?fs_id='+FS_ID+'&shop_id='+SHOP_ID+'&from_date='+fromTime+'&to_date='+toTime+'&page=1&per_page=10000000',
+      url: 'https://fs.tokopedia.net/v2/order/list?fs_id='+FS_ID+'&shop_id='+SHOP_ID+'&from_date='+fromTime+'&to_date='+toTime+'&page=1&per_page=10000000&status=500',
       headers: { 
         'Authorization': 'Bearer '+res.locals.token
       }
