@@ -7,6 +7,7 @@ const { salesorderdetails, salesorders } = require("@Configs/database")
 const crypto = require('crypto');
 const LazadaAPI = require('lazada-open-platform-sdk')
 const { APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA, AUTH_CODE_LAZADA } = process.env
+const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
 
 const baseDirectory = path.join(__dirname, '../token/lazada'); // Define the absolute directory path
@@ -141,12 +142,12 @@ exports.getOrderList = async (req, res) => {
 
     const orderPromises = orders.map(async(element) => {
 
-        let orderNo = generateCustomLengthString(3)+element.order_id
+        let orderNo = uuidv4();
     
         let payloadSO = {
             orderno: orderNo,
-            debtorno: '368',
-            branchcode: '368',
+            debtorno: '123',
+            branchcode: '123',
             customerref: element.order_number,
             buyername: element.address_billing.first_name,
             comments: element.remarks,
@@ -162,18 +163,18 @@ exports.getOrderList = async (req, res) => {
             contactphone: element.address_shipping.phone,
             contactemail: '',
             deliverto: element.address_shipping.first_name,
-            deliverblind: '2',
+            deliverblind: '1',
             freightcost: '0',
-            fromstkloc: 'PST',
+            fromstkloc: 'BP',
             deliverydate: element.updated_at.split(" ")[0],
             confirmeddate:element.updated_at.split(" ")[0],
-            printedpackingslip: '1',
+            printedpackingslip: '0',
             datepackingslipprinted: element.updated_at.split(" ")[0],
             quotation: '0',
             quotedate:  element.updated_at.split(" ")[0],
             poplaced: '0',
-            salesperson: 'P21',
-            userid: 'nurul',
+            salesperson: 'SHB',
+            userid: 'marketplace',
             marketplace: "Lazada",
             shop_id: ""
         }
@@ -210,13 +211,41 @@ exports.getOrderList = async (req, res) => {
             quotation: 0,
             quotedate:  moment(new Date()).format('DD/MM/YYYY'),
             poplaced: 0,
-            salesperson: 'SHB'
+            salesperson: 'SHB',
+            user: 'marketplace'
         }
 
         orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
 
         console.log("XML RPC SO: "+orderNoInternal)
-        internalOrderNo[element.order_number] = orderNoInternal
+  
+        let payloadUpdSO = {
+          executed: new Date()
+        }
+  
+        if(!orderNoInternal[0]) {
+          payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
+          payloadUpdSO["migration"] = 1;
+        } else {
+           payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
+           payloadUpdSO["migration"] = 0;
+        }
+  
+        
+        console.log({payloadUpdSO: payloadUpdSO })
+        //UPDATE
+        let SOResult = await salesorders.update(
+          payloadUpdSO,
+        {
+          where: {
+            orderno: orderNo
+          }
+        })
+        
+        console.log({ SOResult: SOResult });
+  
+        internalOrderNo[element.order_number] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+
         return orderNoInternal;
     });
 
@@ -229,10 +258,10 @@ exports.getOrderList = async (req, res) => {
     listOrderItems.data.map(async (order) => {
 
         order.order_items.map(async (element) => {
-            console.log(element)
+            let orderLineNo = uuidv4();
 
             let payloadSOD = {
-                orderlineno: generateCustomLengthString(4),
+                orderlineno: orderLineNo,
                 orderno: internalOrderNo[order.order_number],     
                 koli:'',
                 stkcode: element.sku,
@@ -252,12 +281,14 @@ exports.getOrderList = async (req, res) => {
             try {
                 let insertSOD = await salesorderdetails.create(payloadSOD);
                 console.log({ insertSOD: insertSOD });
-              } catch (error) {
-                console.error('Error while creating salesorderdetails:', error);
-                // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
-              }
+            } catch (error) {
+              console.error('Error while creating salesorderdetails:', error);
+              // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+            }
 
-            const payloadSOD_XMLRPC = {
+            if(internalOrderNo[order.order_sn] != "00000"){
+
+              const payloadSOD_XMLRPC = {
                 // orderlineno: 3, incremental, tidak perlu di request
                 orderno: internalOrderNo[order.order_number],
                 koli: '',
@@ -271,18 +302,42 @@ exports.getOrderList = async (req, res) => {
                 actualdispatchdate: new Date(),
                 completed: 0,
                 narrative: 'This is a comment.',
-                itemdue: '2023-10-28',
+                itemdue: moment(new Date()).format('YYYY-MM-DD'),
                 poline: '0',
               };
 
               try {
-                let x2 = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
-                console.log("XML RPC SOD: " + x2);
+                let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+                console.log("XML RPC SOD: " + sodRes);
+
+                let payloadUpdSOD = {
+                  executed: new Date()
+                }
+      
+                if(!sodRes[0]) {
+                  payloadUpdSOD["success"] = JSON.stringify(sodRes);
+                  payloadUpdSOD["migration"] = 1;
+                } else {
+                  payloadUpdSOD["error"] = JSON.stringify(sodRes);
+                  payloadUpdSOD["migration"] = 0;
+                }
+
+                // console.log({payloadUpdSOD: payloadUpdSOD })
+                //UPDATE
+                let SODResult = await salesorderdetails.update(
+                  payloadUpdSOD,
+                {
+                  where: {
+                    orderlineno: orderLineNo
+                  }
+                }).catch((err) => console.log({ errorSODResult: err}))
+
+                console.log({ SODResult: SODResult });
               } catch (error) {
                 console.error('Error while using XML RPC for SOD:', error);
                 // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
               }
-            
+            }
         })
     });
 

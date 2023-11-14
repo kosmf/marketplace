@@ -4,6 +4,7 @@ const { salesorderdetails, salesorders } = require("@Configs/database")
 const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
+const { v4: uuidv4 } = require('uuid');
 
 const generateCustomLengthString = (length) => {
     if (length <= 0) {
@@ -45,7 +46,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(2, 'day');
+  const yesterdayDate = currentDate.clone().subtract(1, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -82,7 +83,7 @@ exports.getOrderList = async (req, res) => {
       filteredOrder.map(async (element) => {
           console.log(element)
   
-          let orderNo = generateCustomLengthString(40)
+          let orderNo = uuidv4();
           let shopInfo = getShopInfo(res.locals.shop, element.shop_id)
   
           let payloadSO = {
@@ -184,7 +185,7 @@ exports.getOrderList = async (req, res) => {
           console.log({ SOResult: SOResult });
 
           element.products.map(async(product) => {
-              let orderLineNo = generateCustomLengthString(40);  
+              let orderLineNo = uuidv4();  
 
               let payloadSOD = {
                   orderlineno: orderLineNo,

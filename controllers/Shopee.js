@@ -6,6 +6,7 @@ const moment = require('moment');
 const fs = require('fs').promises;
 const xml_rpc = require("@Controllers/xml-rpc-method")
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const { FS_ID, SHOP_ID, SHOPEE_CODE } = process.env
 
 const host = 'https://partner.shopeemobile.com';
@@ -285,6 +286,7 @@ exports.getOrderList = async (req, res) => {
 
     let orderDetails = []
 
+    //Hit API Order Details Request max. 45 sn_list
     for (let i = 0; i < orderList.length/45; i++) {
       console.log(" Loop "+(i+1));
       const extractedString = orderList.slice((i*45), ((i*45)+45)).join(',');
@@ -305,7 +307,7 @@ exports.getOrderList = async (req, res) => {
 
     const orderPromises = orderDetails.map(async(element) => {
 
-      let orderNo = generateCustomLengthString(10)
+      let orderNo = uuidv4();
   
       let payloadSO = {
           orderno: orderNo,
@@ -337,9 +339,9 @@ exports.getOrderList = async (req, res) => {
           quotedate:  moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
           poplaced: '0',
           salesperson: 'SHB',
-          userid: 'nurul',
+          userid: 'marketplace',
           marketplace: "Shopee",
-          shop_id: shopId
+          shop: shopId
       }
 
       let insertSO = await salesorders.create(payloadSO);
@@ -374,13 +376,41 @@ exports.getOrderList = async (req, res) => {
           quotation: 0,
           quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
           poplaced: 0,
-          salesperson: 'SHB'
+          salesperson: 'SHB',
+          user: 'marketplace',
       }
 
       orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
 
       console.log("XML RPC SO: "+orderNoInternal)
-      internalOrderNo[element.order_sn] = orderNoInternal
+
+      let payloadUpdSO = {
+        executed: new Date()
+      }
+
+      if(!orderNoInternal[0]) {
+        payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
+        payloadUpdSO["migration"] = 1;
+      } else {
+         payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
+         payloadUpdSO["migration"] = 0;
+      }
+
+      
+      console.log({payloadUpdSO: payloadUpdSO })
+      //UPDATE
+      let SOResult = await salesorders.update(
+        payloadUpdSO,
+      {
+        where: {
+          orderno: orderNo
+        }
+      })
+      
+      console.log({ SOResult: SOResult });
+
+      internalOrderNo[element.order_sn] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+
       return orderNoInternal;
     });
 
@@ -391,9 +421,11 @@ exports.getOrderList = async (req, res) => {
 
     orderDetails.map(async(order) => {
 
-      order.map(async(element) => {
+      let orderLineNo = uuidv4();
+
+      order.item_list.map(async(element) => {
         let payloadSOD = {
-          orderlineno: generateCustomLengthString(4),
+          orderlineno: orderLineNo,
           orderno: internalOrderNo[order.order_sn],     
           koli:'',
           stkcode: element.model_sku,
@@ -403,10 +435,10 @@ exports.getOrderList = async (req, res) => {
           estimate:0,
           discountpercent:0,
           discountpercent2:0,
-          actualdispatchdate:element.created_at,
+          actualdispatchdate:new Date(),
           completed:'0',
           narrative:'',
-          itemdue: element.created_at.split(" ")[0],
+          itemdue: moment.unix(new Date()).format('YYYY-MM-DD'),
           poline:0
         }
       
@@ -417,8 +449,9 @@ exports.getOrderList = async (req, res) => {
           console.error('Error while creating salesorderdetails:', error);
           // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
         }
-      
-        const payloadSOD_XMLRPC = {
+        
+        if(internalOrderNo[order.order_sn] != "00000"){
+          const payloadSOD_XMLRPC = {
             // orderlineno: 3, incremental, tidak perlu di request
             orderno: internalOrderNo[order.order_sn],
             koli: '',
@@ -432,17 +465,42 @@ exports.getOrderList = async (req, res) => {
             actualdispatchdate: new Date(),
             completed: 0,
             narrative: 'This is a comment.',
-            itemdue: '2023-10-28',
+            itemdue: moment(new Date()).format('YYYY-MM-DD'),
             poline: '0',
           };
         
           try {
-            let x2 = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
-            console.log("XML RPC SOD: " + x2);
+            let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+            console.log("XML RPC SOD: " + sodRes);
+
+            let payloadUpdSOD = {
+              executed: new Date()
+            }
+  
+            if(!sodRes[0]) {
+              payloadUpdSOD["success"] = JSON.stringify(sodRes);
+              payloadUpdSOD["migration"] = 1;
+            } else {
+              payloadUpdSOD["error"] = JSON.stringify(sodRes);
+              payloadUpdSOD["migration"] = 0;
+            }
+
+            // console.log({payloadUpdSOD: payloadUpdSOD })
+            //UPDATE
+            let SODResult = await salesorderdetails.update(
+              payloadUpdSOD,
+            {
+              where: {
+                orderlineno: orderLineNo
+              }
+            }).catch((err) => console.log({ errorSODResult: err}))
+
+            console.log({ SODResult: SODResult });
           } catch (error) {
             console.error('Error while using XML RPC for SOD:', error);
             // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
           }
+        }
         })
       })
 
@@ -530,7 +588,7 @@ exports.getOrderDetail = async (req, res) => {
 
   // Call public API
   const publicPath = '/api/v2/order/get_order_detail';
-  const publicParams = `&shop_id=${shopId}&order_sn_list=231111AVBFA6MJ&response_optional_fields=buyer_user_id,buyer_username,estimated_shipping_fee,recipient_address,actual_shipping_fee ,goods_to_declare,note,note_update_time,item_list,pay_time,dropshipper,dropshipper_phone,split_up,buyer_cancel_reason,cancel_by,cancel_reason,actual_shipping_fee_confirmed,buyer_cpf_id,fulfillment_flag,pickup_done_time,package_list,shipping_carrier,payment_method,total_amount,buyer_username,invoice_data, checkout_shipping_carrier, reverse_shipping_fee, order_chargeable_weight_gram, edt, prescription_images, prescription_check_status`;
+  const publicParams = `&shop_id=${shopId}&order_sn_list=231113G4HVNPT0&response_optional_fields=buyer_user_id,buyer_username,estimated_shipping_fee,recipient_address,actual_shipping_fee ,goods_to_declare,note,note_update_time,item_list,pay_time,dropshipper,dropshipper_phone,split_up,buyer_cancel_reason,cancel_by,cancel_reason,actual_shipping_fee_confirmed,buyer_cpf_id,fulfillment_flag,pickup_done_time,package_list,shipping_carrier,payment_method,total_amount,buyer_username,invoice_data, checkout_shipping_carrier, reverse_shipping_fee, order_chargeable_weight_gram, edt, prescription_images, prescription_check_status`;
 
   console.log('public params: '+publicParams)
 
