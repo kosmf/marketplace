@@ -73,12 +73,13 @@ exports.getOrderList = async (req, res) => {
       }
     };
     
-    shopExist[shop.shop_name] =  await axios.request(config)
+    shopExist[shop.shop_name] = await axios.request(config)
     .then(async(resApi) => {
 
       // console.log(JSON.stringify(resApi.data));
+      let filteredOrder =  resApi["data"].data.filter(order => order.order_status >= 500)
 
-      resApi["data"].data.map(async (element) => {
+      filteredOrder.map(async (element) => {
           console.log(element)
   
           let orderNo = generateCustomLengthString(40)
