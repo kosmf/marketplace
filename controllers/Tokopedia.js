@@ -45,7 +45,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(14, 'day');
+  const yesterdayDate = currentDate.clone().subtract(2, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -73,7 +73,7 @@ exports.getOrderList = async (req, res) => {
       }
     };
     
-  let resOrderList =  await axios.request(config)
+    shopExist[shop.shop_name] =  await axios.request(config)
     .then(async(resApi) => {
 
       // console.log(JSON.stringify(resApi.data));
@@ -121,7 +121,7 @@ exports.getOrderList = async (req, res) => {
   
           let insertSO = await salesorders.create(payloadSO);
   
-          console.log( {insertSO:insertSO });
+          // console.log( {insertSO:insertSO });
 
           let payloadSO_XMLRPC = {
             debtorno: '123',
@@ -206,7 +206,7 @@ exports.getOrderList = async (req, res) => {
           
               let insertSOD = await salesorderdetails.create(payloadSOD);
   
-              console.log( {insertSOD:insertSOD })
+              // console.log( {insertSOD:insertSOD })
 
               //Jika Response XML RPC SO Success (Ex. Success insert SO: [ 0, '150466' ]), maka dilanjutkan dgn XML RPC untuk SOD
               if(!orderNoInternal[0]){
@@ -244,7 +244,7 @@ exports.getOrderList = async (req, res) => {
                     payloadUpdSOD["migration"] = 0;
                   }
 
-                  console.log({payloadUpdSOD: payloadUpdSOD })
+                  // console.log({payloadUpdSOD: payloadUpdSOD })
                   //UPDATE
                   let SODResult = await salesorderdetails.update(
                     payloadUpdSOD,
@@ -276,8 +276,6 @@ exports.getOrderList = async (req, res) => {
       return payloadError
     })
 
-
-    shopExist[shop.shop_name] = resOrderList;
     console.log({ shopExist: shopExist})
   })
 
