@@ -45,7 +45,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(12, 'day');
+  const yesterdayDate = currentDate.clone().subtract(2, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -55,11 +55,19 @@ exports.getOrderList = async (req, res) => {
   
   console.log('Unix timestamp for from_date (00:00):', fromTime);
   console.log('Unix timestamp for to_date (23:59):', toTime);
+  
+  const shopList = res.locals.shop
 
-  let config = {
+  let shopExist = {}
+
+  shopList.map(async (shop) => {
+
+    shopExist[shop.shop_id] = {};
+
+    let config = {
       method: 'get',
       maxBodyLength: Infinity,
-      url: 'https://fs.tokopedia.net/v2/order/list?fs_id='+FS_ID+'&shop_id='+SHOP_ID+'&from_date='+fromTime+'&to_date='+toTime+'&page=1&per_page=10000000',
+      url: 'https://fs.tokopedia.net/v2/order/list?fs_id='+FS_ID+'&shop_id='+shop.shop_id+'&from_date='+fromTime+'&to_date='+toTime+'&page=1&per_page=10000000',
       headers: { 
         'Authorization': 'Bearer '+res.locals.token
       }
@@ -69,6 +77,9 @@ exports.getOrderList = async (req, res) => {
     .then(async(resApi) => {
 
       console.log(JSON.stringify(resApi.data));
+
+      shopExist[shop.shop_id] = resApi["data"].data;
+
       resApi["data"].data.map(async (element) => {
           console.log(element)
   
@@ -107,7 +118,7 @@ exports.getOrderList = async (req, res) => {
               salesperson: 'P21',
               userid: 'nurul',
               marketplace: "Tokopedia",
-              shop_id: SHOP_ID
+              shop_id: shop.shop_id
           }
   
           let insertSO = await salesorders.create(payloadSO);
@@ -203,13 +214,13 @@ exports.getOrderList = async (req, res) => {
               i++;
           })
       })
-
-      response.res200(res, "000", "Success", { fromTime:fromTime, toTime: toTime, token: res.locals.token, response: resApi.data })
-      return;
     })
     .catch((error) => {
       console.log(error)
-    });
+    })
+  })
+
+  return response.res200(res, "000", "Success", { fromTime:fromTime, toTime: toTime, token: res.locals.token, shopList: shopExist });
 }
 
 exports.getSingleOrder = async (req, res) => {
