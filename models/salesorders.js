@@ -137,10 +137,19 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true,
       defaultValue: "NULL"
     },
-    shop_id: {
+    shop: {
       type: DataTypes.STRING(255),
       allowNull: true,
       defaultValue: "NULL"
+    },
+    migration: {
+      type: DataTypes.STRING(40),
+      allowNull: true,
+      defaultValue: "NULL"
+    },
+    error_description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     }
   }, {
     sequelize,

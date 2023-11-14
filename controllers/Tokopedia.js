@@ -45,7 +45,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(2, 'day');
+  const yesterdayDate = currentDate.clone().subtract(14, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -62,7 +62,7 @@ exports.getOrderList = async (req, res) => {
 
   shopList.map(async (shop) => {
 
-    shopExist[shop.shop_id] = {};
+    shopExist[shop.shop_name] = {};
 
     let config = {
       method: 'get',
@@ -110,13 +110,13 @@ exports.getOrderList = async (req, res) => {
               fromstkloc: 'BP',
               deliverydate: element.shipment_fulfillment.accept_deadline.split("T")[0],
               confirmeddate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
-              printedpackingslip: '1',
+              printedpackingslip: '0',
               datepackingslipprinted: element.shipment_fulfillment.accept_deadline.split("T")[0],
               quotation: '0',
               quotedate:  element.shipment_fulfillment.accept_deadline.split("T")[0],
               poplaced: '0',
-              salesperson: 'P21',
-              userid: 'nurul',
+              salesperson: 'SHB',
+              userid: 'marketplace',
               marketplace: "Tokopedia",
               shop_id: shop.shop_id
           }
@@ -153,7 +153,8 @@ exports.getOrderList = async (req, res) => {
             quotation: 0,
             quotedate:  moment(new Date()).format('DD/MM/YYYY'),
             poplaced: 0,
-            salesperson: 'SHB'
+            salesperson: 'SHB',
+            user: 'marketplace'
           }
 
           let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
