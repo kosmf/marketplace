@@ -62,6 +62,8 @@ exports.getOrderList = async (req, res) => {
 
   shopList.map(async (shop) => {
 
+    shopExist[shop.shop_name] = {}
+
     let config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -77,6 +79,9 @@ exports.getOrderList = async (req, res) => {
       console.log(JSON.stringify(resApi.data));
 
       shopExist[shop.shop_name] = resApi["data"].data
+      shopExist[shop.shop_name] = {...shopExist[shop.shop_name], ...{ shopId: shop.shop_id}}
+
+      console.log({ shopExist: shopExist})
 
       resApi["data"].data.map(async (element) => {
           console.log(element)
@@ -116,7 +121,7 @@ exports.getOrderList = async (req, res) => {
               salesperson: 'SHB',
               userid: 'marketplace',
               marketplace: "Tokopedia",
-              shop_id: shop.shop_id
+              shop: shop.shop_id
           }
   
           let insertSO = await salesorders.create(payloadSO);
@@ -169,6 +174,8 @@ exports.getOrderList = async (req, res) => {
              payloadUpdSO["migration"] = 0;
           }
 
+          
+          console.log({payloadUpdSO: payloadUpdSO })
           //UPDATE
           let SOResult = await salesorders.update(
             payloadUpdSO,
@@ -240,7 +247,9 @@ exports.getOrderList = async (req, res) => {
                     payloadUpdSOD["error"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 0;
                   }
-        
+                  
+
+                  console.log({payloadUpdSOD: payloadUpdSOD })
                   //UPDATE
                   let SODResult = await salesorderdetails.update(
                     payloadUpdSOD,
