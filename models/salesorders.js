@@ -147,10 +147,18 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true,
       defaultValue: "NULL"
     },
-    error_description: {
+    success: {
       type: DataTypes.TEXT,
       allowNull: true,
-    }
+    },
+    error: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    executed: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
   }, {
     sequelize,
     tableName: 'salesorders',

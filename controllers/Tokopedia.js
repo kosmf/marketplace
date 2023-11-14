@@ -78,7 +78,7 @@ exports.getOrderList = async (req, res) => {
 
       console.log(JSON.stringify(resApi.data));
 
-      shopExist[shop.shop_id] = resApi["data"].data;
+      shopExist[shop.shop_name] = resApi["data"].data;
 
       resApi["data"].data.map(async (element) => {
           console.log(element)
@@ -125,6 +125,11 @@ exports.getOrderList = async (req, res) => {
   
           console.log( {insertSO:insertSO });
 
+          let migrationResult = {
+            SO: "Not Yet",
+            SOD: "Not Yet"
+          }
+
           let payloadSO_XMLRPC = {
             debtorno: '123',
             branchcode: '123',
@@ -158,14 +163,35 @@ exports.getOrderList = async (req, res) => {
           }
 
           let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
-  
-          let i = 1;
-      
+
+          let payloadUpdSO = {
+            executed: new Date()
+          }
+
+          if(!orderNoInternal[0]) {
+            payloadUpdSO["success"] = orderNoInternal;
+            payloadUpdSO["migration"] = 1;
+          } else {
+             payloadUpdSO["error"] = orderNoInternal;
+             payloadUpdSO["migration"] = 0;
+          }
+
+          //UPDATE
+          let SOResult = await salesorders.update(
+            payloadUpdSO,
+          {
+            where: {
+              orderno: orderNo
+            }
+          })
+          
+          console.log({ SOResult: SOResult });
+
           element.products.map(async(product) => {
               console.log(product)
               let payloadSOD = {
                   orderlineno: generateCustomLengthString(4),
-                  orderno: orderNo,     
+                  orderno: (!orderNoInternal[0] ? orderNoInternal[1]:"00000"),     
                   koli:'',
                   stkcode: product.sku,
                   qtyinvoiced:'1',
@@ -186,33 +212,59 @@ exports.getOrderList = async (req, res) => {
   
               console.log( {insertSOD:insertSOD })
 
-              const payloadSOD_XMLRPC = {
-                // orderlineno: 3, incremental, tidak perlu di request
-                orderno: orderNoInternal,
-                koli: '',
-                stkcode: product.sku,
-                qtyinvoiced:'1',
-                unitprice:product.total_price,
-                quantity:product.quantity,
-                estimate:0,
-                discountpercent:0,
-                discountpercent2:0,
-                actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
-                completed:'0',
-                narrative:'',
-                itemdue: '2023-11-13',
-                poline: '0',
-              };
+              //Jika Response XML RPC SO Success (Ex. Success insert SO: [ 0, '150466' ]), maka dilanjutkan dgn XML RPC untuk SOD
+              if(!orderNoInternal[0]){
+                const payloadSOD_XMLRPC = {
+                  // orderlineno: 3, incremental, tidak perlu di request
+                  orderno: orderNoInternal,
+                  koli: '',
+                  stkcode: product.sku,
+                  qtyinvoiced:'1',
+                  unitprice:product.total_price,
+                  quantity:product.quantity,
+                  estimate:0,
+                  discountpercent:0,
+                  discountpercent2:0,
+                  actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
+                  completed:'0',
+                  narrative:'',
+                  itemdue: moment(new Date()).format('YYYY-MM-DD'),
+                  poline: '0',
+                };
+  
+                try {
+                  let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+                  console.log("XML RPC SOD: " + sodRes);
 
-              try {
-                let x2 = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
-                console.log("XML RPC SOD: " + x2);
-              } catch (error) {
-                console.error('Error while using XML RPC for SOD:', error);
-                // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+                  let payloadUpdSOD = {
+                    executed: new Date()
+                  }
+        
+                  if(!sodRes[0]) {
+                    payloadUpdSOD["success"] = sodRes;
+                    payloadUpdSOD["migration"] = 1;
+                  } else {
+                    payloadUpdSOD["error"] = sodRes;
+                    payloadUpdSOD["migration"] = 0;
+                  }
+        
+                  //UPDATE
+                  let SODResult = await salesorderdetails.update(
+                    payloadUpdSOD,
+                  {
+                    where: {
+                      orderno: orderNo
+                    }
+                  })
+
+                  console.log({ SODResult: SODResult });
+
+                } catch (error) {
+                  console.error('Error while using XML RPC for SOD:', error);
+                  // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+                }
+  
               }
-
-              i++;
           })
       })
     })

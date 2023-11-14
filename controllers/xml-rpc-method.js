@@ -123,11 +123,11 @@ exports.insertSO = async (payload) => {
         if (error) {
           const errorMessage = 'Error while inserting sales order header:';
           console.error(errorMessage, error);
-          reject(new Error(errorMessage));
+          reject(error);
         } else {
           console.log('Sales order header inserted successfully.');
           console.log("Success insert SO:", value);
-          resolve(value[1]);
+          resolve(value);
         }
       });
     });
@@ -154,17 +154,11 @@ exports.insertSOD = async (payload) => {
         if (error) {
           const errorMessage = 'Error while inserting sales order line:';
           console.error(errorMessage, error);
-          reject(new Error(errorMessage));
+          reject(error);
         } else {
-          if (value[0] === 0) {
-            console.log('Sales order line inserted successfully.');
-            console.log("Success insert SOD:", value);
-            resolve("Success");
-          } else {
-            const errors = value; // An array of errors
-            console.error('Error inserting sales order line:', errors);
-            reject(new Error('Error inserting sales order line'));
-          }
+          console.log('Sales order line inserted successfully.');
+          console.log("Success insert SOD:", value);
+          resolve(value);
         }
       });
     });

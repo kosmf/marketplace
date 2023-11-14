@@ -64,7 +64,24 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(10),
       allowNull: true,
       comment: "Some Customers require acknowledgements with a PO line number for each sales line"
-    }
+    },
+    migration: {
+      type: DataTypes.STRING(40),
+      allowNull: true,
+      defaultValue: "NULL"
+    },
+    success: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    error: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    executed: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
   }, {
     sequelize,
     tableName: 'salesorderdetails',
