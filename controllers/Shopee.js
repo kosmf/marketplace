@@ -421,9 +421,10 @@ exports.getOrderList = async (req, res) => {
 
     orderDetails.map(async(order) => {
 
-      let orderLineNo = uuidv4();
-
       order.item_list.map(async(element) => {
+
+        let orderLineNo = uuidv4();
+
         let payloadSOD = {
           orderlineno: orderLineNo,
           orderno: internalOrderNo[order.order_sn],     
