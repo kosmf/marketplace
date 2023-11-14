@@ -76,7 +76,7 @@ exports.getOrderList = async (req, res) => {
   let resOrderList =  await axios.request(config)
     .then(async(resApi) => {
 
-      console.log(JSON.stringify(resApi.data));
+      // console.log(JSON.stringify(resApi.data));
 
       resApi["data"].data.map(async (element) => {
           console.log(element)
@@ -183,9 +183,10 @@ exports.getOrderList = async (req, res) => {
           console.log({ SOResult: SOResult });
 
           element.products.map(async(product) => {
-              console.log(product)
+              let orderLineNo = generateCustomLengthString(40);  
+
               let payloadSOD = {
-                  orderlineno: generateCustomLengthString(40),
+                  orderlineno: orderLineNo,
                   orderno: (!orderNoInternal[0] ? orderNoInternal[1]:"00000"),     
                   koli:'',
                   stkcode: product.sku,
@@ -236,13 +237,12 @@ exports.getOrderList = async (req, res) => {
                   }
         
                   if(!sodRes[0]) {
-                    // payloadUpdSOD["success"] = JSON.stringify(sodRes);
+                    payloadUpdSOD["success"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 1;
                   } else {
-                    // payloadUpdSOD["error"] = JSON.stringify(sodRes);
+                    payloadUpdSOD["error"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 0;
                   }
-                  
 
                   console.log({payloadUpdSOD: payloadUpdSOD })
                   //UPDATE
@@ -250,7 +250,7 @@ exports.getOrderList = async (req, res) => {
                     payloadUpdSOD,
                   {
                     where: {
-                      orderno: orderNo
+                      orderlineno: orderLineNo
                     }
                   }).catch((err) => console.log({ errorSODResult: err}))
 
