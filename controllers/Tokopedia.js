@@ -62,8 +62,6 @@ exports.getOrderList = async (req, res) => {
 
   shopList.map(async (shop) => {
 
-    shopExist[shop.shop_name] = {};
-
     let config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -78,7 +76,7 @@ exports.getOrderList = async (req, res) => {
 
       console.log(JSON.stringify(resApi.data));
 
-      shopExist[shop.shop_name] = resApi["data"].data;
+      shopExist[shop.shop_name] = resApi["data"].data
 
       resApi["data"].data.map(async (element) => {
           console.log(element)
@@ -125,11 +123,6 @@ exports.getOrderList = async (req, res) => {
   
           console.log( {insertSO:insertSO });
 
-          let migrationResult = {
-            SO: "Not Yet",
-            SOD: "Not Yet"
-          }
-
           let payloadSO_XMLRPC = {
             debtorno: '123',
             branchcode: '123',
@@ -169,10 +162,10 @@ exports.getOrderList = async (req, res) => {
           }
 
           if(!orderNoInternal[0]) {
-            payloadUpdSO["success"] = orderNoInternal;
+            payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
             payloadUpdSO["migration"] = 1;
           } else {
-             payloadUpdSO["error"] = orderNoInternal;
+             payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
              payloadUpdSO["migration"] = 0;
           }
 
@@ -241,10 +234,10 @@ exports.getOrderList = async (req, res) => {
                   }
         
                   if(!sodRes[0]) {
-                    payloadUpdSOD["success"] = sodRes;
+                    payloadUpdSOD["success"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 1;
                   } else {
-                    payloadUpdSOD["error"] = sodRes;
+                    payloadUpdSOD["error"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 0;
                   }
         
