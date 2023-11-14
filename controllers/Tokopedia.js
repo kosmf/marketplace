@@ -73,15 +73,10 @@ exports.getOrderList = async (req, res) => {
       }
     };
     
-  return await axios.request(config)
+  let resOrderList =  await axios.request(config)
     .then(async(resApi) => {
 
       console.log(JSON.stringify(resApi.data));
-
-      shopExist[shop.shop_name] = resApi["data"].data
-      shopExist[shop.shop_name] = {...shopExist[shop.shop_name], ...{ shopId: shop.shop_id}}
-
-      console.log({ shopExist: shopExist})
 
       resApi["data"].data.map(async (element) => {
           console.log(element)
@@ -241,10 +236,10 @@ exports.getOrderList = async (req, res) => {
                   }
         
                   if(!sodRes[0]) {
-                    payloadUpdSOD["success"] = JSON.stringify(sodRes);
+                    // payloadUpdSOD["success"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 1;
                   } else {
-                    payloadUpdSOD["error"] = JSON.stringify(sodRes);
+                    // payloadUpdSOD["error"] = JSON.stringify(sodRes);
                     payloadUpdSOD["migration"] = 0;
                   }
                   
@@ -257,7 +252,7 @@ exports.getOrderList = async (req, res) => {
                     where: {
                       orderno: orderNo
                     }
-                  })
+                  }).catch((err) => console.log({ errorSODResult: err}))
 
                   console.log({ SODResult: SODResult });
 
@@ -265,14 +260,25 @@ exports.getOrderList = async (req, res) => {
                   console.error('Error while using XML RPC for SOD:', error);
                   // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
                 }
-  
               }
           })
       })
+
+      return resApi["data"].data;
     })
     .catch((error) => {
       console.log(error)
+
+      let payloadError = {
+        error: error.config
+      }
+
+      return payloadError
     })
+
+
+    shopExist[shop.shop_name] = resOrderList;
+    console.log({ shopExist: shopExist})
   })
 
   return response.res200(res, "000", "Success", { fromTime:fromTime, toTime: toTime, token: res.locals.token, shopList: shopExist });
