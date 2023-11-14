@@ -81,7 +81,7 @@ exports.getOrderList = async (req, res) => {
       resApi["data"].data.map(async (element) => {
           console.log(element)
   
-          let orderNo = generateCustomLengthString(10)+element.order_id
+          let orderNo = generateCustomLengthString(40)
           let shopInfo = getShopInfo(res.locals.shop, element.shop_id)
   
           let payloadSO = {
@@ -185,7 +185,7 @@ exports.getOrderList = async (req, res) => {
           element.products.map(async(product) => {
               console.log(product)
               let payloadSOD = {
-                  orderlineno: generateCustomLengthString(4),
+                  orderlineno: generateCustomLengthString(40),
                   orderno: (!orderNoInternal[0] ? orderNoInternal[1]:"00000"),     
                   koli:'',
                   stkcode: product.sku,

@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('salesorderdetails', {
     orderlineno: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(40),
       allowNull: false,
       primaryKey: true
     },
