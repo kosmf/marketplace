@@ -13,22 +13,6 @@ const moment = require('moment-timezone');
 const baseDirectory = path.join(__dirname, '../token/lazada'); // Define the absolute directory path
 const aLazadaAPI = new LazadaAPI(APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA)
 
-const generateCustomLengthString = (length) => {
-    if (length <= 0) {
-        throw new Error('Length must be a positive integer');
-    }
-
-    const characters = '0123456789';
-    // const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
-}
 
 async function writeFileAsync(fileName, content) {
 
@@ -62,11 +46,15 @@ async function readFileAsync(fileName) {
 }
 
 
-exports.callback = async(req, res) => {
-    console.log({ reqCallbackHeaders : req.headers })
-    console.log({ reqCallback : req.body })
+exports.getShop = async(req, res) => {
+  const getShop = await aLazadaAPI
+  .getSeller()
+  .then(response => {
+      console.log({ response: response})
+      return response.data;
+  })
 
-    return response.res200(res, "000", "Success", { callback: req.body })
+  return response.res200(res, "000", "Success", { getShop: getShop })
 }
 
 exports.getToken = async (req, res) => {
@@ -106,7 +94,7 @@ exports.getOrderList = async (req, res) => {
     const now = moment.tz(jakartaTimezone);
 
     // Subtract one day to get yesterday
-    const yesterday = now.subtract(2, 'days');
+    const yesterday = now.subtract(1, 'days');
 
     // Set the time to 00:00:00
     yesterday.startOf('day');

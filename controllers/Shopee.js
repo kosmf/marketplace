@@ -216,7 +216,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(2, 'day');
+  const yesterdayDate = currentDate.clone().subtract(1, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -282,7 +282,7 @@ exports.getOrderList = async (req, res) => {
 
     // Delete the object and transform to string value order_sn only
     orderList = orderList.map(item => item.order_sn);
-    orderList = orderList.slice(0, 20);
+    // orderList = orderList.slice(0, 20);
 
     let orderDetails = []
 

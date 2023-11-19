@@ -63,21 +63,14 @@ router.route("/refreshToken")
         })
     });
 
-router.route("/callback")
+router.route("/getShop")
     .get(async (req, res, next) => {
-        await lazadaController.callback(req, res, next).catch((error) => {
+        await lazadaController.getShop(req, res, next).catch((error) => {
             console.error(error);
             return response.res500(res)
         })
     });
 
-router.route("/callback")
-    .post(async (req, res, next) => {
-        await lazadaController.callback(req, res, next).catch((error) => {
-            console.error(error);
-            return response.res500(res)
-        })
-    });
 
 router.all("*", index);
 

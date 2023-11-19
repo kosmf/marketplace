@@ -15,11 +15,11 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     customerref: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(100),
       allowNull: false
     },
     buyername: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(100),
       allowNull: true,
       defaultValue: "NULL"
     },
@@ -77,7 +77,7 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: "NULL"
     },
     deliverto: {
-      type: DataTypes.STRING(40),
+      type: DataTypes.STRING(100),
       allowNull: false
     },
     deliverblind: {
