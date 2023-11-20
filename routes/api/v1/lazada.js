@@ -39,7 +39,7 @@ router.route("/xmlRPC/insertSOD")
         await rpcController.insertSOD(req, res, next)
     });
 
-router.route("/getOrderList")
+router.route("/getOrderList/:shopId")
     .get(async (req, res, next) => {
         await lazadaController.getOrderList(req, res, next).catch((error) => {
             console.error(error);
@@ -47,7 +47,7 @@ router.route("/getOrderList")
         })
     });
 
-router.route("/getToken")
+router.route("/getToken/:shopId")
     .get(async (req, res, next) => {
         await lazadaController.getToken(req, res, next).catch((error) => {
             console.error(error);
@@ -55,7 +55,7 @@ router.route("/getToken")
         })
     });
 
-router.route("/refreshToken")
+router.route("/refreshToken/:shopId")
     .get(async (req, res, next) => {
         await lazadaController.refreshToken(req, res, next).catch((error) => {
             console.error(error);

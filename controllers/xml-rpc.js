@@ -166,7 +166,7 @@ exports.insertSOD = (req, res) => {
     orderno: "76037",
     koli: '',
     stkcode: '014251140392',
-    qtyinvoiced: 1,
+    qtyinvoiced: 0,
     unitprice: 100,
     quantity: 10,
     estimate: 0,

@@ -58,37 +58,62 @@ exports.getShop = async(req, res) => {
 }
 
 exports.getToken = async (req, res) => {
-    const getToken = await aLazadaAPI
-    .generateAccessToken({ code: AUTH_CODE_LAZADA })
-    .then(response => {
-        console.log({ response: response})
-        const { access_token } = response // JSON data from Lazada's API
-        return response;
-    })
 
-    
-    writeFileAsync('token.txt', getToken.access_token);
-    writeFileAsync('refresh_token.txt', getToken.refresh_token);
+  const shopId = req.params.shopId
 
-    return response.res200(res, "000", "Success", { getToken: getToken })
+  console.log({ shopId: shopId});
+
+  const getToken = await aLazadaAPI
+  .generateAccessToken({ code: AUTH_CODE_LAZADA })
+  .then(response => {
+      console.log({ response: response})
+      const { access_token } = response // JSON data from Lazada's API
+      return response;
+  })
+  
+  writeFileAsync(shopId+'/token.txt', getToken.access_token);
+  writeFileAsync(shopId+'/refresh_token.txt', getToken.refresh_token);
+
+  return response.res200(res, "000", "Success", { getToken: getToken })
 }
 
 exports.refreshToken = async (req, res) => {
-    const refreshTokenContent = await readFileAsync('refresh_token.txt');
 
-    console.log({ refreshTokenContent: refreshTokenContent})
+  const shopId = req.params.shopId
 
-    const refreshToken = await aLazadaAPI.refreshAccessToken({ refresh_token: refreshTokenContent });
+  console.log({ shopId: shopId});
 
-    writeFileAsync('token.txt', refreshToken.access_token);
-    writeFileAsync('refresh_token.txt', refreshToken.refresh_token);
+  const refreshTokenContent = await readFileAsync(shopId+'/refresh_token.txt');
 
-    return response.res200(res, "000", "Success", { refreshToken: refreshToken })
+  console.log({ refreshTokenContent: refreshTokenContent})
+
+  const refreshToken = await aLazadaAPI.refreshAccessToken({ refresh_token: refreshTokenContent });
+
+  writeFileAsync(shopId+'/token.txt', refreshToken.access_token);
+  writeFileAsync(shopId+'/refresh_token.txt', refreshToken.refresh_token);
+
+  return response.res200(res, "000", "Success", { refreshToken: refreshToken })
 }
 
 exports.getOrderList = async (req, res) => {
 
-    const tokenContent = await readFileAsync('token.txt');
+    const shopId = req.params.shopId
+
+    const tokenContent = await readFileAsync(shopId+'token.txt');
+
+    // const debtOrsmaster = await debtorsmaster.findOne({
+    //   raw: true,
+    //   where: {
+    //     idseller: shopId
+    //   }
+    // })
+
+    // const custBranch = custbranch.findOne({
+    //   raw: true,
+    //   where: {
+    //     debtorno: debtOrsmaster.debtorno
+    //   }
+    // })
 
     const jakartaTimezone = 'Asia/Jakarta';
     const now = moment.tz(jakartaTimezone);
@@ -164,7 +189,7 @@ exports.getOrderList = async (req, res) => {
             salesperson: 'SHB',
             userid: 'marketplace',
             marketplace: "Lazada",
-            shop_id: ""
+            shop: shopId
         }
 
         let insertSO = await salesorders.create(payloadSO);
@@ -253,7 +278,7 @@ exports.getOrderList = async (req, res) => {
                 orderno: internalOrderNo[order.order_number],     
                 koli:'',
                 stkcode: element.sku,
-                qtyinvoiced:'1',
+                qtyinvoiced:'0',
                 unitprice:element.item_price,
                 quantity:'1',
                 estimate:0,
@@ -281,7 +306,7 @@ exports.getOrderList = async (req, res) => {
                 orderno: internalOrderNo[order.order_number],
                 koli: '',
                 stkcode: element.sku,
-                qtyinvoiced: 1,
+                qtyinvoiced: 0,
                 unitprice: element.item_price,
                 quantity: 1,
                 estimate: 0,

@@ -312,7 +312,7 @@ exports.getOrderList = async (req, res) => {
             orderno: orderNo,     
             koli:'',
             stkcode: product.sku_id,
-            qtyinvoiced:'1',
+            qtyinvoiced:'0',
             unitprice:product.sku_sale_price,
             quantity:product.quantity,
             estimate:0,
