@@ -68,7 +68,7 @@ exports.getOrderList = async (req, res) => {
     const debtOrsmaster = await debtorsmaster.findOne({
       raw: true,
       where: {
-        idseller: shop.shop_id
+        idseller: shop.shop_id.toString()
       }
     })
   
