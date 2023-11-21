@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const response = require("@Components/response")
 const xml_rpc = require("@Controllers/xml-rpc-method")
-const { salesorderdetails, salesorders } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch } = require("@Configs/database")
 const crypto = require('crypto');
 const LazadaAPI = require('lazada-open-platform-sdk')
 const { APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA, AUTH_CODE_LAZADA } = process.env
@@ -99,21 +99,23 @@ exports.getOrderList = async (req, res) => {
 
     const shopId = req.params.shopId
 
-    const tokenContent = await readFileAsync(shopId+'token.txt');
+    const tokenContent = await readFileAsync(shopId+'/token.txt');
 
-    // const debtOrsmaster = await debtorsmaster.findOne({
-    //   raw: true,
-    //   where: {
-    //     idseller: shopId
-    //   }
-    // })
+    const debtOrsmaster = await debtorsmaster.findOne({
+      raw: true,
+      where: {
+        idseller: shopId
+      }
+    })
 
-    // const custBranch = custbranch.findOne({
-    //   raw: true,
-    //   where: {
-    //     debtorno: debtOrsmaster.debtorno
-    //   }
-    // })
+    const custBranch = await custbranch.findOne({
+      raw: true,
+      where: {
+        debtorno: debtOrsmaster.debtorno
+      }
+    })
+
+    // return response.res200(res, "000", "Success", {custBranch: custBranch, tokenContent: tokenContent })
 
     const jakartaTimezone = 'Asia/Jakarta';
     const now = moment.tz(jakartaTimezone);
@@ -129,6 +131,7 @@ exports.getOrderList = async (req, res) => {
         
     console.log('formattedTimestamp : '+formattedTimestamp);
 
+    // const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp })
     const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp, status: 'shipped' })
     .then((resApi) => {
         console.log({ resApi: resApi})
@@ -159,8 +162,8 @@ exports.getOrderList = async (req, res) => {
     
         let payloadSO = {
             orderno: orderNo,
-            debtorno: '123',
-            branchcode: '123',
+            debtorno: custBranch.debtorno,
+            branchcode: custBranch.branchcode,
             customerref: element.order_number,
             buyername: element.address_billing.first_name,
             comments: element.remarks,
@@ -186,7 +189,7 @@ exports.getOrderList = async (req, res) => {
             quotation: '0',
             quotedate:  element.updated_at.split(" ")[0],
             poplaced: '0',
-            salesperson: 'SHB',
+            salesperson: custBranch.salesman,
             userid: 'marketplace',
             marketplace: "Lazada",
             shop: shopId
@@ -197,8 +200,8 @@ exports.getOrderList = async (req, res) => {
         console.log( {insertSO:insertSO }); 
 
         let payloadSO_XMLRPC = {
-            debtorno: '123',
-            branchcode: '123',
+            debtorno: custBranch.debtorno,
+            branchcode: custBranch.branchcode,
             customerref: element.order_number,
             buyername: element.address_billing.first_name,
             comments: element.remarks,
@@ -224,7 +227,7 @@ exports.getOrderList = async (req, res) => {
             quotation: 0,
             quotedate:  moment(new Date()).format('DD/MM/YYYY'),
             poplaced: 0,
-            salesperson: 'SHB',
+            salesperson: custBranch.salesman,
             user: 'marketplace'
         }
 
@@ -258,6 +261,7 @@ exports.getOrderList = async (req, res) => {
         console.log({ SOResult: SOResult });
   
         internalOrderNo[element.order_number] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+        // console.log({ internalOrderNoExist: internalOrderNo })
 
         return orderNoInternal;
     });
@@ -267,7 +271,8 @@ exports.getOrderList = async (req, res) => {
 
     console.log({ internalOrderNo: internalOrderNo})
 
-    
+    return response.res200(res, "000", "Success", {internalOrderNo: internalOrderNo, listOrders: listOrders })
+
     listOrderItems.data.map(async (order) => {
 
         order.order_items.map(async (element) => {
@@ -284,7 +289,7 @@ exports.getOrderList = async (req, res) => {
                 estimate:0,
                 discountpercent:0,
                 discountpercent2:0,
-                actualdispatchdate:element.created_at,
+                actualdispatchdate:new Date(),
                 completed:'0',
                 narrative:'',
                 itemdue: element.created_at.split(" ")[0],

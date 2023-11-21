@@ -1,6 +1,6 @@
 const axios = require('axios');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch } = require("@Configs/database")
 const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
@@ -65,6 +65,20 @@ exports.getOrderList = async (req, res) => {
 
     shopExist[shop.shop_name] = {}
 
+    const debtOrsmaster = await debtorsmaster.findOne({
+      raw: true,
+      where: {
+        idseller: shop.shop_id
+      }
+    })
+  
+    const custBranch = await custbranch.findOne({
+      raw: true,
+      where: {
+        debtorno: debtOrsmaster.debtorno
+      }
+    })
+
     let config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -88,8 +102,8 @@ exports.getOrderList = async (req, res) => {
   
           let payloadSO = {
               orderno: orderNo,
-              debtorno: '123',
-              branchcode: '123',
+              debtorno: custBranch.debtorno,
+              branchcode: custBranch.branchcode,
               customerref: element.order_id,
               buyername: element.buyer.name,
               comments: "",
@@ -115,7 +129,7 @@ exports.getOrderList = async (req, res) => {
               quotation: '0',
               quotedate:  element.shipment_fulfillment.accept_deadline.split("T")[0],
               poplaced: '0',
-              salesperson: 'SHB',
+              salesperson: custBranch.salesman,
               userid: 'marketplace',
               marketplace: "Tokopedia",
               shop: shop.shop_id
@@ -126,8 +140,8 @@ exports.getOrderList = async (req, res) => {
           // console.log( {insertSO:insertSO });
 
           let payloadSO_XMLRPC = {
-            debtorno: '123',
-            branchcode: '123',
+            debtorno: custBranch.debtorno,
+            branchcode: custBranch.branchcode,
             customerref: element.order_id,
             buyername: element.buyer.name,
             comments: "",
@@ -153,7 +167,7 @@ exports.getOrderList = async (req, res) => {
             quotation: 0,
             quotedate:  moment(new Date()).format('DD/MM/YYYY'),
             poplaced: 0,
-            salesperson: 'SHB',
+            salesperson: custBranch.salesman,
             user: 'marketplace'
           }
 

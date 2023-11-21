@@ -67,21 +67,22 @@ module.exports = function(sequelize, DataTypes) {
     },
     migration: {
       type: DataTypes.STRING(40),
-      allowNull: true,
-      defaultValue: "NULL"
+      allowNull: true
     },
     success: {
       type: DataTypes.TEXT,
       allowNull: true,
+      comment: "Success Migration Message"
     },
     error: {
       type: DataTypes.TEXT,
       allowNull: true,
+      comment: "Error Migration Message"
     },
     executed: {
       type: DataTypes.DATE,
       allowNull: true
-    },
+    }
   }, {
     sequelize,
     tableName: 'salesorderdetails',

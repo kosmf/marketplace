@@ -78,7 +78,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     deliverto: {
       type: DataTypes.STRING(100),
-      allowNull: false
+      allowNull: true
     },
     deliverblind: {
       type: DataTypes.SMALLINT,
@@ -134,31 +134,30 @@ module.exports = function(sequelize, DataTypes) {
     },
     marketplace: {
       type: DataTypes.STRING(255),
-      allowNull: true,
-      defaultValue: "NULL"
+      allowNull: true
     },
     shop: {
       type: DataTypes.STRING(255),
-      allowNull: true,
-      defaultValue: "NULL"
+      allowNull: true
     },
     migration: {
       type: DataTypes.STRING(40),
-      allowNull: true,
-      defaultValue: "NULL"
+      allowNull: true
     },
     success: {
       type: DataTypes.TEXT,
       allowNull: true,
+      comment: "Success Migration Message"
     },
     error: {
       type: DataTypes.TEXT,
       allowNull: true,
+      comment: "Error Migration Message"
     },
     executed: {
       type: DataTypes.DATE,
       allowNull: true
-    },
+    }
   }, {
     sequelize,
     tableName: 'salesorders',
