@@ -6,22 +6,6 @@ const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
 const { v4: uuidv4 } = require('uuid');
 
-const generateCustomLengthString = (length) => {
-    if (length <= 0) {
-        throw new Error('Length must be a positive integer');
-    }
-
-    const characters = '0123456789';
-    // const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
-}
 
 const getShopInfo = (shopList, shopId) => {
   let shopInfo = {}
@@ -75,7 +59,7 @@ exports.getOrderList = async (req, res) => {
     const custBranch = await custbranch.findOne({
       raw: true,
       where: {
-        debtorno: debtOrsmaster.debtorno
+        debtorno: debtOrsmaster?.debtorno ?? "832"
       }
     })
 
@@ -121,7 +105,7 @@ exports.getOrderList = async (req, res) => {
               deliverto: shopInfo.shop_name,
               deliverblind: '1',
               freightcost: '0',
-              fromstkloc: 'BP',
+              fromstkloc: custBranch.defaultlocation,
               deliverydate: element.shipment_fulfillment.accept_deadline.split("T")[0],
               confirmeddate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
               printedpackingslip: '0',
@@ -159,7 +143,7 @@ exports.getOrderList = async (req, res) => {
             deliverto: shopInfo.shop_name,
             deliverblind: '1',
             freightcost: 0,
-            fromstkloc: 'BP',
+            fromstkloc: custBranch.defaultlocation,
             deliverydate: moment(new Date()).format('DD/MM/YYYY'),
             confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
             printedpackingslip: 0,
@@ -217,6 +201,8 @@ exports.getOrderList = async (req, res) => {
                   narrative:'',
                   itemdue: element.shipment_fulfillment.accept_deadline.split("T")[0],
                   poline:0,
+                  marketplace: "Tokopedia",
+                  shop: shop.shop_id
           
               }
           

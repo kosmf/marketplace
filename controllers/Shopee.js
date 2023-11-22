@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch } = require("@Configs/database")
 const moment = require('moment');
 const fs = require('fs').promises;
 const xml_rpc = require("@Controllers/xml-rpc-method")
@@ -12,28 +12,11 @@ const { FS_ID, SHOP_ID, SHOPEE_CODE } = process.env
 const host = 'https://partner.shopeemobile.com';
 const partnerId = 2006477;
 const partnerKey = '644c6d6f4675576c646f7079616f51655052757643484a7876636c437a707552';
-const shopId = 308454744;
+// const shopId = 308454744;
+const shopId = 291418593;
 const merchantId = 1234567;
 
 const baseDirectory = path.join(__dirname, '../token/shopee'); // Define the absolute directory path
-
-
-const generateCustomLengthString = (length) => {
-  if (length <= 0) {
-      throw new Error('Length must be a positive integer');
-  }
-
-  const characters = '0123456789';
-  // const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-
-  for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length);
-      result += characters.charAt(randomIndex);
-  }
-
-  return result;
-}
 
 async function writeFileAsync(fileName, content) {
 
@@ -231,6 +214,22 @@ exports.getOrderList = async (req, res) => {
   console.log('Unix timestamp for from_date (00:00):', fromTime);
   console.log('Unix timestamp for to_date (23:59):', toTime);
 
+  const debtOrsmaster = await debtorsmaster.findOne({
+    raw: true,
+    where: {
+      idseller: shopId.toString()
+    }
+  })
+
+  const custBranch = await custbranch.findOne({
+    raw: true,
+    where: {
+      debtorno: debtOrsmaster?.debtorno ?? "832"
+    }
+  })
+
+  // return response.res200(res, "000", "Success", {custBranch: custBranch, tokenAccess: tokenAccess })
+
   // Call public API
   const publicPath = '/api/v2/order/get_order_list';
   const publicParams = `&shop_id=${shopId}&time_range_field=${time_range_field}&time_from=${fromTime}&time_to=${toTime}&page_size=${20}&order_status=SHIPPED`;
@@ -311,8 +310,8 @@ exports.getOrderList = async (req, res) => {
   
       let payloadSO = {
           orderno: orderNo,
-          debtorno: '123',
-          branchcode: '123',
+          debtorno: custBranch.debtorno,
+          branchcode: custBranch.branchcode,
           customerref: element.order_sn,
           buyername: element.buyer_username,
           comments: element.note,
@@ -330,7 +329,7 @@ exports.getOrderList = async (req, res) => {
           deliverto: element.recipient_address.name,
           deliverblind: '1',
           freightcost: '0',
-          fromstkloc: 'BP',
+          fromstkloc: custBranch.defaultlocation,
           deliverydate: moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
           confirmeddate:moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
           printedpackingslip: '0',
@@ -338,7 +337,7 @@ exports.getOrderList = async (req, res) => {
           quotation: '0',
           quotedate:  moment.unix(element.ship_by_date).format('YYYY-MM-DD'),
           poplaced: '0',
-          salesperson: 'SHB',
+          salesperson: custBranch.salesman,
           userid: 'marketplace',
           marketplace: "Shopee",
           shop: shopId
@@ -349,35 +348,35 @@ exports.getOrderList = async (req, res) => {
       console.log( {insertSO:insertSO }); 
 
       let payloadSO_XMLRPC = {
-          debtorno: '123',
-          branchcode: '123',
-          customerref: element.order_sn,
-          buyername: element.buyer_username,
-          comments: element.note,
-          orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
-          ordertype: "GS",
-          shipvia: "1",
-          deladd1: element.recipient_address.full_address.substring(0, 40),
-          deladd2: element.recipient_address.district,
-          deladd3: element.recipient_address.city,
-          deladd4: element.recipient_address.state,
-          deladd5: element.recipient_address.zipcode,
-          deladd6: element.recipient_address.region,
-          contactphone: element.recipient_address.phone,
-          contactemail: '',
-          deliverto: element.recipient_address.name,
-          deliverblind: '1',
-          freightcost: 0,
-          fromstkloc: 'BP',
-          deliverydate: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-          confirmeddate:moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-          printedpackingslip: 0,
-          datepackingslipprinted: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-          quotation: 0,
-          quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-          poplaced: 0,
-          salesperson: 'SHB',
-          user: 'marketplace',
+        debtorno: custBranch.debtorno,
+        branchcode: custBranch.branchcode,
+        customerref: element.order_sn,
+        buyername: element.buyer_username,
+        comments: element.note,
+        orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
+        ordertype: "GS",
+        shipvia: "1",
+        deladd1: element.recipient_address.full_address.substring(0, 40),
+        deladd2: element.recipient_address.district,
+        deladd3: element.recipient_address.city,
+        deladd4: element.recipient_address.state,
+        deladd5: element.recipient_address.zipcode,
+        deladd6: element.recipient_address.region,
+        contactphone: element.recipient_address.phone,
+        contactemail: '',
+        deliverto: element.recipient_address.name,
+        deliverblind: '1',
+        freightcost: 0,
+        fromstkloc: custBranch.defaultlocation,
+        deliverydate: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+        confirmeddate:moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+        printedpackingslip: 0,
+        datepackingslipprinted: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+        quotation: 0,
+        quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+        poplaced: 0,
+        salesperson: custBranch.salesman,
+        user: 'marketplace',
       }
 
       orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
@@ -440,7 +439,9 @@ exports.getOrderList = async (req, res) => {
           completed:'0',
           narrative:'',
           itemdue: moment.unix(new Date()).format('YYYY-MM-DD'),
-          poline:0
+          poline:0,
+          marketplace: "Shopee",
+          shop: shopId
         }
       
         try {

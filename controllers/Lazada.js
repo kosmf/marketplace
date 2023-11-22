@@ -45,18 +45,6 @@ async function readFileAsync(fileName) {
     }
 }
 
-
-exports.getShop = async(req, res) => {
-  const getShop = await aLazadaAPI
-  .getSeller()
-  .then(response => {
-      console.log({ response: response})
-      return response.data;
-  })
-
-  return response.res200(res, "000", "Success", { getShop: getShop })
-}
-
 exports.getToken = async (req, res) => {
 
   const shopId = req.params.shopId
@@ -111,7 +99,7 @@ exports.getOrderList = async (req, res) => {
     const custBranch = await custbranch.findOne({
       raw: true,
       where: {
-        debtorno: debtOrsmaster.debtorno
+        debtorno: debtOrsmaster?.debtorno ?? "832"
       }
     })
 
@@ -181,7 +169,7 @@ exports.getOrderList = async (req, res) => {
             deliverto: element.address_shipping.first_name,
             deliverblind: '1',
             freightcost: '0',
-            fromstkloc: 'BP',
+            fromstkloc: custBranch.defaultlocation,
             deliverydate: element.updated_at.split(" ")[0],
             confirmeddate:element.updated_at.split(" ")[0],
             printedpackingslip: '0',
@@ -219,7 +207,7 @@ exports.getOrderList = async (req, res) => {
             deliverto: element.address_shipping.first_name,
             deliverblind: '1',
             freightcost: 0,
-            fromstkloc: 'BP',
+            fromstkloc: custBranch.defaultlocation,
             deliverydate: moment(new Date()).format('DD/MM/YYYY'),
             confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
             printedpackingslip: 0,
@@ -271,7 +259,7 @@ exports.getOrderList = async (req, res) => {
 
     console.log({ internalOrderNo: internalOrderNo})
 
-    return response.res200(res, "000", "Success", {internalOrderNo: internalOrderNo, listOrders: listOrders })
+    // return response.res200(res, "000", "Success", {internalOrderNo: internalOrderNo, listOrders: listOrders })
 
     listOrderItems.data.map(async (order) => {
 
@@ -293,7 +281,9 @@ exports.getOrderList = async (req, res) => {
                 completed:'0',
                 narrative:'',
                 itemdue: element.created_at.split(" ")[0],
-                poline:0
+                poline:0,
+                marketplace: "Lazada",
+                shop: shopId
             }
 
             try {

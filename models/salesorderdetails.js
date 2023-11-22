@@ -82,6 +82,14 @@ module.exports = function(sequelize, DataTypes) {
     executed: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    marketplace: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    shop: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     sequelize,
