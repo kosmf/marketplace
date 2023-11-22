@@ -13,7 +13,11 @@ const host = 'https://partner.shopeemobile.com';
 const partnerId = 2006477;
 const partnerKey = '644c6d6f4675576c646f7079616f51655052757643484a7876636c437a707552';
 // const shopId = 308454744;
-const shopId = 291418593;
+// const shopId = 201093353;
+// const shopId = 291418593;
+// const shopId = 1032355345;
+// const shopId2 = 1087585903;
+// const shopId = 1030098836;
 const merchantId = 1234567;
 
 const baseDirectory = path.join(__dirname, '../token/shopee'); // Define the absolute directory path
@@ -59,11 +63,22 @@ const generateSign = (baseString) => {
 // Function to get Token
 exports.getToken = async (req, res) => {
 
+  const shopId = +req.params.shopId
+  const authCode = req.params.authCode
+
+  console.log({ shopId: shopId, authCode: authCode });
+
   const path = '/api/v2/auth/token/get';
   const timest = Math.floor(Date.now() / 1000);
 
+  // const body = {
+  //   code: SHOPEE_CODE,
+  //   shop_id: shopId,
+  //   partner_id: partnerId,
+  // };
+
   const body = {
-    code: SHOPEE_CODE,
+    code: authCode,
     shop_id: shopId,
     partner_id: partnerId,
   };
@@ -90,8 +105,8 @@ exports.getToken = async (req, res) => {
     const newRefreshToken = data.refresh_token;
     console.log(`access_token: ${accessToken}, refresh_token: ${newRefreshToken}, raw: ${JSON.stringify(data)}`);
 
-    writeFileAsync('token.txt', data.access_token);
-    writeFileAsync('refresh_token.txt', data.refresh_token);
+    writeFileAsync(shopId+'/token.txt', data.access_token);
+    writeFileAsync(shopId+'/refresh_token.txt', data.refresh_token);
 
     return response.res200(res, "000", "GET TOKEN SUCCESS", data);
 
@@ -123,9 +138,12 @@ exports.getToken = async (req, res) => {
 
 // Function refresh Token
 exports.refreshToken = async (req, res) => {
-  const refreshTokenContent = await readFileAsync('refresh_token.txt');
 
-  console.log( { tokenShopee: res.locals.tokenShopee })
+  const shopId = +req.params.shopId
+
+  console.log({ shopId: shopId});
+
+  const refreshTokenContent = await readFileAsync(shopId+'/refresh_token.txt');
 
   const path = '/api/v2/auth/access_token/get';
   const timest = Math.floor(Date.now() / 1000);
@@ -158,8 +176,8 @@ exports.refreshToken = async (req, res) => {
     const newRefreshToken = data.refresh_token;
     console.log(`access_token: ${accessToken}, refresh_token: ${newRefreshToken}, raw: ${JSON.stringify(data)}`);
 
-    writeFileAsync('token.txt', data.access_token);
-    writeFileAsync('refresh_token.txt', data.refresh_token);
+    writeFileAsync(shopId+'/token.txt', data.access_token);
+    writeFileAsync(shopId+'/refresh_token.txt', data.refresh_token);
 
     return response.res200(res, "000", "GET TOKEN SUCCESS", data);
 
@@ -191,7 +209,11 @@ exports.refreshToken = async (req, res) => {
 
 exports.getOrderList = async (req, res) => {
 
-  const tokenAccess = await readFileAsync('token.txt');
+  const shopId = +req.params.shopId
+
+  console.log({ shopId: shopId});
+
+  const tokenAccess = await readFileAsync(shopId+'/token.txt');
 
   let orderList = []
 
@@ -293,7 +315,7 @@ exports.getOrderList = async (req, res) => {
       console.log("extractedString : "+extractedString)
 
       if(extractedString){
-        let getDetails = await orderDetail(extractedString);
+        let getDetails = await orderDetail(extractedString, shopId);
         orderDetails.push(...getDetails);
   
         console.log(orderDetails);
@@ -438,7 +460,8 @@ exports.getOrderList = async (req, res) => {
           actualdispatchdate:new Date(),
           completed:'0',
           narrative:'',
-          itemdue: moment.unix(new Date()).format('YYYY-MM-DD'),
+          // itemdue: moment.unix(new Date()).format('YYYY-MM-DD'),
+          itemdue: moment(new Date()).format('YYYY-MM-DD'),
           poline:0,
           marketplace: "Shopee",
           shop: shopId
@@ -516,9 +539,9 @@ exports.getOrderList = async (req, res) => {
 
 }
 
-const orderDetail = async (sn_list) => {
+const orderDetail = async (sn_list, shopId) => {
 
-  const tokenAccess = await readFileAsync('token.txt');
+  const tokenAccess = await readFileAsync(shopId+'/token.txt');
 
   // Get current date
   const currentDate = moment();
@@ -558,7 +581,7 @@ const orderDetail = async (sn_list) => {
   .catch(error => {
     // The request failed
     console.error('GET request failed:', error);
-    return response.res200(res, "000", "OrderDetail Failed", { error: error.response.data})
+    return error;
   });
 
 }

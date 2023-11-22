@@ -9,7 +9,7 @@ const shopeController = require("@root/controllers/Shopee");
 
 const index = (req, res, next) => response.res404(res);
 
-router.route("/getToken")
+router.route("/getToken/:shopId/:authCode")
     .get(async (req, res, next) => {
         await shopeController.getToken(req, res, next).catch((error) => {
             console.error(error);
@@ -17,14 +17,14 @@ router.route("/getToken")
         })
     });
     
-router.route("/refreshToken")
+router.route("/refreshToken/:shopId")
     .get(async (req, res, next) => {
         await shopeController.refreshToken(req, res, next).catch((error) => {
             console.error(error);
             return response.res500(res)
         })
     });
-router.route("/getOrderList")
+router.route("/getOrderList/:shopId")
     .get(async (req, res, next) => {
         await shopeController.getOrderList(req, res, next).catch((error) => {
             console.error(error);

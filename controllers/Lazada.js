@@ -280,7 +280,8 @@ exports.getOrderList = async (req, res) => {
                 actualdispatchdate:new Date(),
                 completed:'0',
                 narrative:'',
-                itemdue: element.created_at.split(" ")[0],
+                // itemdue: element.created_at.split(" ")[0],
+                itemdue: moment(new Date()).format('YYYY-MM-DD'),
                 poline:0,
                 marketplace: "Lazada",
                 shop: shopId
