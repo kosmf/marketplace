@@ -3,7 +3,7 @@
 ## Create model with sequelize
 sequelize-auto -h DB_HOST -d DB_NAME -u DB_USER -x DB_PASS -p DB_PORT --dialect postgres -o ./models -t banks channel_callback_logs channel_to_bank channels provider_to_bank providers transactions vas
 
-sequelize-auto -h 202.157.186.30 -d marketplace -u root -x M4rketplace -p 5432 --dialect postgres -o ./models -t custbranch debtorsmaster salesorderdetails salesorders
+sequelize-auto -h 202.157.186.30 -d marketplace -u root -x M4rketplace -p 5432 --dialect postgres -o ./models -t custbranch debtorsmaster salesorderdetails salesorders log
 
 ## Example
 {

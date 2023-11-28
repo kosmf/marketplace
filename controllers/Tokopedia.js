@@ -1,6 +1,6 @@
 const axios = require('axios');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log } = require("@Configs/database")
 const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
@@ -63,6 +63,8 @@ exports.getOrderList = async (req, res) => {
       }
     })
 
+    const uidLog = uuidv4();
+
     let config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -72,8 +74,37 @@ exports.getOrderList = async (req, res) => {
       }
     };
     
+    const reqGOLog = {
+      uid: uidLog,
+      payload: config,
+      marketplace: 'Tokopedia',
+      shop_id: shop.shop_id,
+      executed: new Date(),
+      api: '/v2/order/list',
+      phase: 'Request',
+      id: uuidv4()
+    }
+
+    let insertReqGOLog = await log.create(reqGOLog);
+
+    console.log( {insertReqGOLog:insertReqGOLog }); 
+
     shopExist[shop.shop_name] = await axios.request(config)
     .then(async(resApi) => {
+
+      const resGOLog = {
+        uid: uidLog,
+        payload: resApi.data,
+        marketplace: 'Tokopedia',
+        shop_id: shop.shop_id,
+        executed: new Date(),
+        api: '/v2/order/list',
+        phase: 'Response',
+        id: uuidv4()
+      }
+  
+      let insertResGOLog = await log.create(resGOLog);
+      console.log( {insertResGOLog:insertResGOLog }); 
 
       // console.log(JSON.stringify(resApi.data));
       let filteredOrder =  resApi["data"].data.filter(order => order.order_status >= 500)
@@ -91,7 +122,8 @@ exports.getOrderList = async (req, res) => {
               customerref: element.order_id,
               buyername: element.buyer.name,
               comments: "",
-              orddate: element.payment_date.split("T")[0],
+              // orddate: element.create_time,
+              orddate: moment.unix(element.create_time).format('YYYY-MM-DD'),
               ordertype: "GS",
               shipvia: "1",
               deladd1: element.recipient.address.address_full,
@@ -129,7 +161,8 @@ exports.getOrderList = async (req, res) => {
             customerref: element.order_id,
             buyername: element.buyer.name,
             comments: "",
-            orddate: moment(new Date()).format('DD/MM/YYYY'),
+            orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
+            // orddate: moment(new Date()).format('DD/MM/YYYY'),
             ordertype: "GS",
             shipvia: "1",
             deladd1: element.recipient.address.address_full,
@@ -197,7 +230,7 @@ exports.getOrderList = async (req, res) => {
                   discountpercent:0,
                   discountpercent2:0,
                   // actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
-                  actualdispatchdate: new Date(),
+                  actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
                   completed:'0',
                   narrative:'',
                   // itemdue: element.shipment_fulfillment.accept_deadline.split("T")[0],

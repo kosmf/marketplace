@@ -22,10 +22,12 @@ const salesorders = require("@Models/salesorders");
 const salesorderdetails = require("@Models/salesorderdetails");
 const custbranch = require("@Models/custbranch");
 const debtorsmaster = require("@Models/debtorsmaster");
+const log = require("@Models/log");
 
 module.exports = {
   salesorders: salesorders(db, DataTypes),
   salesorderdetails: salesorderdetails(db, DataTypes),
   custbranch: custbranch(db, DataTypes),
   debtorsmaster: debtorsmaster(db, DataTypes),
+  log: log(db, DataTypes),
 };

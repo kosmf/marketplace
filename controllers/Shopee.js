@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log } = require("@Configs/database")
 const moment = require('moment');
 const fs = require('fs').promises;
 const xml_rpc = require("@Controllers/xml-rpc-method")
@@ -264,8 +264,40 @@ exports.getOrderList = async (req, res) => {
 
   const url = `${host}${publicPath}?partner_id=${partnerId}&sign=${sign}&timestamp=${timestamp}&access_token=${tokenAccess}${publicParams}`;
 
+  const uidLog = uuidv4();
+
+  const reqGOLog = {
+    uid: uidLog,
+    payload: { urlGet: url },
+    marketplace: 'Shopee',
+    shop_id: shopId,
+    executed: new Date(),
+    api: publicPath,
+    phase: 'Request',
+    id: uuidv4()
+  }
+
+  let insertReqGOLog = await log.create(reqGOLog);
+
+  console.log( {insertReqGOLog:insertReqGOLog }); 
+
   return await axios.get(url).then(async ({ data: responseApi}) => {
     // console.log({ response: responseApi})
+
+    const resGOLog = {
+      uid: uidLog,
+      payload: responseApi,
+      marketplace: 'Shopee',
+      shop_id: shopId,
+      executed: new Date(),
+      api: publicPath,
+      phase: 'Response',
+      id: uuidv4()
+    }
+  
+    let insertResGOLog = await log.create(resGOLog);
+  
+    console.log( {insertResGOLog:insertResGOLog }); 
 
     orderList.push(...responseApi.response.order_list);
 
@@ -277,8 +309,38 @@ exports.getOrderList = async (req, res) => {
       let nextParams = publicParams+'&cursor='+cursor
       let nextUrl = `${host}${publicPath}?partner_id=${partnerId}&sign=${sign}&timestamp=${timestamp}&access_token=${tokenAccess}${nextParams}`;
 
+      let reqGOLogNext = {
+        uid: uidLog,
+        payload: { urlGet: nextUrl },
+        marketplace: 'Shopee',
+        shop_id: shopId,
+        executed: new Date(),
+        api: nextParams,
+        phase: 'Request',
+        id: uuidv4()
+      }
+    
+      let insertReqGOLogNext = await log.create(reqGOLogNext);
+    
+      console.log( {insertReqGOLogNext:insertReqGOLogNext }); 
+
       let nextCursor = await axios.get(nextUrl).then(async ({ data: responseNext}) => {
         console.log({ nextPage: responseNext})
+
+        let resGOLogNext = {
+          uid: uidLog,
+          payload: responseNext,
+          marketplace: 'Shopee',
+          shop_id: shopId,
+          executed: new Date(),
+          api: publicPath,
+          phase: 'Response',
+          id: uuidv4()
+        }
+      
+        let insertResGOLogNext = await log.create(resGOLogNext);
+      
+        console.log( {insertResGOLogNext:insertResGOLogNext }); 
 
         orderList.push(...responseNext.response.order_list);
 
@@ -401,6 +463,8 @@ exports.getOrderList = async (req, res) => {
         user: 'marketplace',
       }
 
+      console.log({ payloadSO_XMLRPC: payloadSO_XMLRPC})
+
       orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
 
       console.log("XML RPC SO: "+orderNoInternal)
@@ -457,7 +521,7 @@ exports.getOrderList = async (req, res) => {
           estimate:0,
           discountpercent:0,
           discountpercent2:0,
-          actualdispatchdate:new Date(),
+          actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
           completed:'0',
           narrative:'',
           // itemdue: moment.unix(new Date()).format('YYYY-MM-DD'),
@@ -487,10 +551,11 @@ exports.getOrderList = async (req, res) => {
             estimate: 0,
             discountpercent: 0,
             discountpercent2: 0,
-            actualdispatchdate: new Date(),
+            actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
             completed: 0,
             narrative: 'This is a comment.',
             itemdue: moment(new Date()).format('YYYY-MM-DD'),
+            // itemdue: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
             poline: '0',
           };
         

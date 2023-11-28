@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const response = require("@Components/response")
 const xml_rpc = require("@Controllers/xml-rpc-method")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log } = require("@Configs/database")
 const crypto = require('crypto');
 const LazadaAPI = require('lazada-open-platform-sdk')
 const { APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA, AUTH_CODE_LAZADA } = process.env
@@ -119,28 +119,157 @@ exports.getOrderList = async (req, res) => {
         
     console.log('formattedTimestamp : '+formattedTimestamp);
 
+    const uidLog = uuidv4();
+
+    //Shipped
+
+    const payloadGO = {
+      access_token: tokenContent,
+      created_after: formattedTimestamp,
+      status: "shipped",
+    };
+
+    const reqGOLog = {
+      uid: uidLog,
+      payload: payloadGO,
+      marketplace: 'Lazada',
+      shop_id: shopId,
+      executed: new Date(),
+      api: 'getOrders',
+      phase: 'Request',
+      id: uuidv4()
+    }
+
+    let insertReqGOLog = await log.create(reqGOLog);
+
+    console.log( {insertReqGOLog:insertReqGOLog }); 
+
     // const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp })
-    const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp, status: 'shipped' })
-    .then((resApi) => {
-        console.log({ resApi: resApi})
-        return resApi
+    const shipped = await aLazadaAPI.getOrders(payloadGO)
+    .then(async (resApi) => {
+      console.log({ resApi: resApi})
+
+      const resGOLog = {
+        uid: uidLog,
+        payload: resApi.data,
+        marketplace: 'Lazada',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'getOrders',
+        phase: 'Response',
+        id: uuidv4()
+      }
+  
+      let insertResGOLog = await log.create(resGOLog);
+      console.log( {insertResGOLog:insertResGOLog }); 
+
+      return resApi
+    })
+    .catch((err) => console.log(err))
+
+    // Delivered
+    const payloadGO2 = {
+      access_token: tokenContent,
+      created_after: formattedTimestamp,
+      status: "delivered",
+    };
+
+    const reqGOLog2 = {
+      uid: uidLog,
+      payload: payloadGO2,
+      marketplace: 'Lazada',
+      shop_id: shopId,
+      executed: new Date(),
+      api: 'getOrders',
+      phase: 'Request',
+      id: uuidv4()
+    }
+
+    let insertReqGOLog2 = await log.create(reqGOLog2);
+
+    console.log( {insertReqGOLog2:insertReqGOLog2 }); 
+
+    // const listOrders = await aLazadaAPI.getOrders({ access_token: tokenContent, created_after: formattedTimestamp })
+    const delivered = await aLazadaAPI.getOrders(payloadGO2)
+    .then(async (resApi) => {
+      console.log({ resApi: resApi})
+
+      const resGOLog2 = {
+        uid: uidLog,
+        payload: resApi.data,
+        marketplace: 'Lazada',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'getOrders',
+        phase: 'Response',
+        id: uuidv4()
+      }
+  
+      let insertResGOLog2 = await log.create(resGOLog2);
+      console.log( {insertResGOLog2:insertResGOLog2 }); 
+
+      return resApi
     })
     .catch((err) => console.log(err))
     
-    const orders = listOrders.data.orders;
-    const orderIds = orders.map(order => order.order_id);
+    const orders = shipped.data.orders;
+    const shippedData = orders.map(order => order.order_id);
+
+    const orders2 = delivered.data.orders;
+    const deliveredData = orders2.map(orders => orders.order_id);
+
+    const orderIds = [...shippedData, ...deliveredData]
+
+    if(!orderIds.length) return response.res200(res, "003", "Data Empty", { count: 0, countTotal: 0, orders: [] });
 
     console.log(orderIds)
     // Convert the array of order IDs to a string format "[order_id, order_id, ...]"
     const formattedOrderIds = "[" + orderIds.join() + "]";
     console.log(formattedOrderIds)
 
-    const listOrderItems = await aLazadaAPI.getMultipleOrderItems({ access_token: tokenContent, order_ids: formattedOrderIds })
-    .then((resApi) => {
-        console.log({ resApi: resApi})
-        return resApi
+    const payloadGMOI = {
+      access_token: tokenContent,
+      order_ids: formattedOrderIds,
+    };
+
+    const reqGMOILog = {
+      uid: uidLog,
+      payload: payloadGMOI,
+      marketplace: 'Lazada',
+      shop_id: shopId,
+      executed: new Date(),
+      api: 'getMultipleOrderItems',
+      phase: 'Request',
+      id: uuidv4()
+    }
+
+    let insertReqGMOILog = await log.create(reqGMOILog);
+
+    console.log( {insertReqGMOILog:insertReqGMOILog }); 
+
+    const listOrderItems = await aLazadaAPI.getMultipleOrderItems(payloadGMOI)
+    .then(async (resApi) => {
+      console.log({ resApi: resApi})
+
+      const resGMOILog = {
+        uid: uidLog,
+        payload: resApi.data,
+        marketplace: 'Lazada',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'getMultipleOrderItems',
+        phase: 'Response',
+        id: uuidv4()
+      }
+  
+      let insertResGMOILog = await log.create(resGMOILog);
+      console.log( {insertResGMOILog:insertResGMOILog }); 
+
+      return resApi
     })
     .catch((err) => console.log(err))
+
+    // return response.res200(res, "000", "Success", {count: listOrderItems.data.length,listOrderItems: listOrderItems })
 
     let internalOrderNo = {}
 
@@ -193,7 +322,7 @@ exports.getOrderList = async (req, res) => {
             customerref: element.order_number,
             buyername: element.address_billing.first_name,
             comments: element.remarks,
-            orddate: moment(new Date()).format('DD/MM/YYYY'),
+            orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
             ordertype: "GS",
             shipvia: "1",
             deladd1: element.address_shipping.address1.substring(0, 40),
@@ -277,11 +406,12 @@ exports.getOrderList = async (req, res) => {
                 estimate:0,
                 discountpercent:0,
                 discountpercent2:0,
-                actualdispatchdate:new Date(),
+                actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
                 completed:'0',
                 narrative:'',
                 // itemdue: element.created_at.split(" ")[0],
                 itemdue: moment(new Date()).format('YYYY-MM-DD'),
+                // itemdue: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
                 poline:0,
                 marketplace: "Lazada",
                 shop: shopId
@@ -308,7 +438,7 @@ exports.getOrderList = async (req, res) => {
                 estimate: 0,
                 discountpercent: 0,
                 discountpercent2: 0,
-                actualdispatchdate: new Date(),
+                actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
                 completed: 0,
                 narrative: 'This is a comment.',
                 itemdue: moment(new Date()).format('YYYY-MM-DD'),
@@ -352,6 +482,6 @@ exports.getOrderList = async (req, res) => {
 
     console.log({ listOrderItems : listOrderItems})
         
-    return response.res200(res, "000", "Success", {listOrderItems: listOrderItems })
+    return response.res200(res, "000", "Success", { count: listOrderItems.data.length, listOrderItems: listOrderItems })
 
 }
