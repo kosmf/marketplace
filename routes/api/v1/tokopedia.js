@@ -33,6 +33,14 @@ router.route("/getShop")
     })
 });
 
+router.route("/stressTest")
+.get(async (req, res, next) => {
+    await tokopediaController.stressTest(req, res, next).catch((error) => {
+        console.error(error);
+        return response.res500(res)
+    })
+});
+
 router.all("*", index);
 
 module.exports = router;

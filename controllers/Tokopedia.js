@@ -24,6 +24,52 @@ const getShopInfo = (shopList, shopId) => {
   return shopInfo;
 }
 
+exports.stressTest = async (req, res) => {
+  console.log("Stress Test")
+  let result = []
+
+  for (let i = 0; i < 100; i++) {
+    console.log(`Iteration ${i + 1}`);
+    let payloadSO_XMLRPC = {
+      debtorno: '832',
+      branchcode: '832',
+      customerref: '231128RR1J9RBE',
+      buyername: 'nurlsaja',
+      comments: '',
+      orddate: '28/11/2023',
+      ordertype: 'GS',
+      shipvia: '1',
+      deladd1: 'Pecel lele depan villa Tubagus jln raya ',
+      deladd2: 'ANYAR',
+      deladd3: 'KAB. SERANG',
+      deladd4: 'BANTEN',
+      deladd5: '42166',
+      deladd6: 'ID',
+      contactphone: '6285180656608',
+      contactemail: '',
+      deliverto: 'Nuril abidin',
+      deliverblind: '1',
+      freightcost: 0,
+      fromstkloc: 'PST',
+      deliverydate: '30/11/2023',
+      confirmeddate: '30/11/2023',
+      printedpackingslip: 0,
+      datepackingslipprinted: '30/11/2023',
+      quotation: 0,
+      quotedate: '30/11/2023',
+      poplaced: 0,
+      salesperson: 'DM',
+      user: 'marketplace'
+    }
+
+    let resSO = await xml_rpc.insertSO(payloadSO_XMLRPC)
+    result = [...result, ...resSO]
+    console.log({ payloadSO: resSO})
+  }
+  
+  return response.res200(res, "000", "Success", { result: result });
+}
+
 exports.getOrderList = async (req, res) => {
 
   // Get current date
