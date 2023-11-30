@@ -27,8 +27,9 @@ router.route("/refreshToken/:shopId")
 router.route("/getOrderList/:shopId")
     .get(async (req, res, next) => {
         await shopeController.getOrderList(req, res, next).catch((error) => {
+            console.log("ERROR NI")
             console.error(error);
-            return response.res500(res)
+            return response.res500(res, error)
         })
     });
 router.route("/getOrderDetail")

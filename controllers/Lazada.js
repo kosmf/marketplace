@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const response = require("@Components/response")
 const xml_rpc = require("@Controllers/xml-rpc-method")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace, log_rpc } = require("@Configs/database")
 const crypto = require('crypto');
 const LazadaAPI = require('lazada-open-platform-sdk')
 const { APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA, AUTH_CODE_LAZADA } = process.env
@@ -319,7 +319,7 @@ exports.getOrderList = async (req, res) => {
         let payloadSO_XMLRPC = {
             debtorno: custBranch.debtorno,
             branchcode: custBranch.branchcode,
-            customerref: element.order_number.substring(0, 50),
+            customerref: element.order_number.toString().substring(0, 50),
             buyername: element.address_billing.first_name.substring(0, 50),
             comments: element.remarks,
             orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
@@ -348,7 +348,39 @@ exports.getOrderList = async (req, res) => {
             user: 'marketplace'
         }
 
-        orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+        const reqSO = {
+          uid: orderNo,
+          payload: payloadSO_XMLRPC,
+          marketplace: 'Lazada',
+          shop_id: shopId,
+          executed: new Date(),
+          api: 'SO',
+          phase: 'Request',
+          id: uuidv4()
+        }
+    
+        let logReqSO = await log_rpc.create(reqSO);
+        console.log( {logReqSO:logReqSO }); 
+
+        let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+
+        const resInsSO = {
+          response : orderNoInternal
+        }
+
+        const resSO = {
+          uid: orderNo,
+          payload: resInsSO,
+          marketplace: 'Lazada',
+          shop_id: shopId,
+          executed: new Date(),
+          api: 'SO',
+          phase: 'Response',
+          id: uuidv4()
+        }
+    
+        let logResSO = await log_rpc.create(resSO);
+        console.log( {logResSO:logResSO }); 
 
         console.log("XML RPC SO: "+orderNoInternal)
   
@@ -446,8 +478,41 @@ exports.getOrderList = async (req, res) => {
               };
 
               try {
+
+                const reqSOD = {
+                  uid: orderLineNo,
+                  payload: payloadSOD_XMLRPC,
+                  marketplace: 'Lazada',
+                  shop_id: shopId,
+                  executed: new Date(),
+                  api: 'SOD',
+                  phase: 'Request',
+                  id: uuidv4()
+                }
+            
+                let logReqSOD = await log_rpc.create(reqSOD);
+                console.log( {logReqSOD:logReqSOD }); 
+
                 let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
                 console.log("XML RPC SOD: " + sodRes);
+
+                const resInsSOD = {
+                  response : sodRes
+                }
+
+                const resSOD = {
+                  uid: orderLineNo,
+                  payload: resInsSOD,
+                  marketplace: 'Lazada',
+                  shop_id: shopId,
+                  executed: new Date(),
+                  api: 'SOD',
+                  phase: 'Response',
+                  id: uuidv4()
+                }
+            
+                let logResSOD = await log_rpc.create(resSOD);
+                console.log( {logResSOD:logResSOD }); 
 
                 let payloadUpdSOD = {
                   executed: new Date()

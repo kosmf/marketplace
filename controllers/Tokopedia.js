@@ -255,7 +255,7 @@ exports.getOrderList = async (req, res) => {
             response : orderNoInternal
           }
 
-          const resSOD = {
+          const resSO = {
             uid: orderNo,
             payload: resInsSO,
             marketplace: 'Tokopedia',
@@ -266,7 +266,7 @@ exports.getOrderList = async (req, res) => {
             id: uuidv4()
           }
       
-          let logResSO = await log_rpc.create(resSOD);
+          let logResSO = await log_rpc.create(resSO);
           console.log( {logResSO:logResSO }); 
 
           let payloadUpdSO = {

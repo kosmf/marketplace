@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace, log_rpc } = require("@Configs/database")
 const moment = require('moment');
 const fs = require('fs').promises;
 const xml_rpc = require("@Controllers/xml-rpc-method")
@@ -279,7 +279,7 @@ exports.getOrderList = async (req, res) => {
 
   let insertReqGOLog = await log_marketplace.create(reqGOLog);
 
-  console.log( {insertReqGOLog:insertReqGOLog }); 
+  // console.log( {insertReqGOLog:insertReqGOLog }); 
 
   return await axios.get(url).then(async ({ data: responseApi}) => {
     // console.log({ response: responseApi})
@@ -297,7 +297,7 @@ exports.getOrderList = async (req, res) => {
   
     let insertResGOLog = await log_marketplace.create(resGOLog);
   
-    console.log( {insertResGOLog:insertResGOLog }); 
+    // console.log( {insertResGOLog:insertResGOLog }); 
 
     orderList.push(...responseApi.response.order_list);
 
@@ -322,7 +322,7 @@ exports.getOrderList = async (req, res) => {
     
       let insertReqGOLogNext = await log_marketplace.create(reqGOLogNext);
     
-      console.log( {insertReqGOLogNext:insertReqGOLogNext }); 
+      // console.log( {insertReqGOLogNext:insertReqGOLogNext }); 
 
       let nextCursor = await axios.get(nextUrl).then(async ({ data: responseNext}) => {
         console.log({ nextPage: responseNext})
@@ -340,7 +340,7 @@ exports.getOrderList = async (req, res) => {
       
         let insertResGOLogNext = await log_marketplace.create(resGOLogNext);
       
-        console.log( {insertResGOLogNext:insertResGOLogNext }); 
+        // console.log( {insertResGOLogNext:insertResGOLogNext }); 
 
         orderList.push(...responseNext.response.order_list);
 
@@ -354,7 +354,7 @@ exports.getOrderList = async (req, res) => {
         console.error('Next Page:', error);
         return 0;
       });
-      console.log({ valueNextCursor : nextCursor})
+      // console.log({ valueNextCursor : nextCursor})
 
       if(!nextCursor) break;
     }
@@ -374,13 +374,13 @@ exports.getOrderList = async (req, res) => {
       console.log(" Loop "+(i+1));
       const extractedString = orderList.slice((i*45), ((i*45)+45)).join(',');
 
-      console.log("extractedString : "+extractedString)
+      // console.log("extractedString : "+extractedString)
 
       if(extractedString){
         let getDetails = await orderDetail(extractedString, shopId);
         orderDetails.push(...getDetails);
   
-        console.log(orderDetails);
+        // console.log(orderDetails);
       } 
     }
 
@@ -429,7 +429,7 @@ exports.getOrderList = async (req, res) => {
 
       let insertSO = await salesorders.create(payloadSO);
 
-      console.log( {insertSO:insertSO }); 
+      // console.log( {insertSO:insertSO }); 
 
       let payloadSO_XMLRPC = {
         debtorno: custBranch.debtorno,
@@ -463,11 +463,42 @@ exports.getOrderList = async (req, res) => {
         user: 'marketplace',
       }
 
-      console.log({ payloadSO_XMLRPC: payloadSO_XMLRPC})
+      // console.log({ payloadSO_XMLRPC: payloadSO_XMLRPC})
 
-      orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+      const reqSO = {
+        uid: orderNo,
+        payload: payloadSO_XMLRPC,
+        marketplace: 'Shopee',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'SO',
+        phase: 'Request',
+        id: uuidv4()
+      }
+  
+      let logReqSO = await log_rpc.create(reqSO);
+      console.log( {logReqSO:logReqSO });
 
+      let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
       console.log("XML RPC SO: "+orderNoInternal)
+
+      const resInsSO = {
+        response : orderNoInternal
+      }
+
+      const resSO = {
+        uid: orderNo,
+        payload: resInsSO,
+        marketplace: 'Shopee',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'SO',
+        phase: 'Response',
+        id: uuidv4()
+      }
+  
+      let logResSO = await log_rpc.create(resSO);
+      // console.log( {logResSO:logResSO }); 
 
       let payloadUpdSO = {
         executed: new Date()
@@ -482,7 +513,7 @@ exports.getOrderList = async (req, res) => {
       }
 
       
-      console.log({payloadUpdSO: payloadUpdSO })
+      // console.log({payloadUpdSO: payloadUpdSO })
       //UPDATE
       let SOUpdate = await salesorders.update(
         payloadUpdSO,
@@ -492,7 +523,7 @@ exports.getOrderList = async (req, res) => {
         }
       })
       
-      console.log({ SOUpdate: SOUpdate });
+      // console.log({ SOUpdate: SOUpdate });
 
       internalOrderNo[element.order_sn] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
 
@@ -502,7 +533,7 @@ exports.getOrderList = async (req, res) => {
     // Wait for all order promises to complete
     await Promise.all(orderPromises);
 
-    console.log({ internalOrderNo: internalOrderNo})
+    // console.log({ internalOrderNo: internalOrderNo})
 
     orderDetails.map(async(order) => {
 
@@ -533,7 +564,7 @@ exports.getOrderList = async (req, res) => {
       
         try {
           let insertSOD = await salesorderdetails.create(payloadSOD);
-          console.log({ insertSOD: insertSOD });
+          // console.log({ insertSOD: insertSOD });
         } catch (error) {
           console.error('Error while creating salesorderdetails:', error);
           // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
@@ -560,8 +591,41 @@ exports.getOrderList = async (req, res) => {
           };
         
           try {
+
+            const reqSOD = {
+              uid: orderLineNo,
+              payload: payloadSOD_XMLRPC,
+              marketplace: 'Shopee',
+              shop_id: shopId,
+              executed: new Date(),
+              api: 'SOD',
+              phase: 'Request',
+              id: uuidv4()
+            }
+        
+            let logReqSOD = await log_rpc.create(reqSOD);
+            // console.log( {logReqSOD:logReqSOD }); 
+
             let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
-            console.log("XML RPC SOD: " + sodRes);
+            // console.log("XML RPC SOD: " + sodRes);
+
+            const resInsSOD = {
+              response : sodRes
+            }
+
+            const resSOD = {
+              uid: orderLineNo,
+              payload: resInsSOD,
+              marketplace: 'Shopee',
+              shop_id: shopId,
+              executed: new Date(),
+              api: 'SOD',
+              phase: 'Response',
+              id: uuidv4()
+            }
+        
+            let logResSOD = await log_rpc.create(resSOD);
+            // console.log( {logResSOD:logResSOD }); 
 
             let payloadUpdSOD = {
               executed: new Date()
@@ -585,7 +649,7 @@ exports.getOrderList = async (req, res) => {
               }
             }).catch((err) => console.log({ errorSODUpdate: err}))
 
-            console.log({ SODUpdate: SODUpdate });
+            // console.log({ SODUpdate: SODUpdate });
           } catch (error) {
             console.error('Error while using XML RPC for SOD:', error);
             // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
