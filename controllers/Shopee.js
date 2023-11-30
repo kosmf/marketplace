@@ -446,7 +446,7 @@ exports.getOrderList = async (req, res) => {
         deladd4: element.recipient_address.state.substring(0, 40),
         deladd5: element.recipient_address.zipcode.substring(0, 20),
         deladd6: element.recipient_address.region.substring(0, 15),
-        contactphone: element.recipient_address.phone.substring(0, 25),
+        contactphone: element?.recipient_address?.phone?.substring(0, 25) || "",
         contactemail: '',
         deliverto: element.recipient_address.name.substring(0, 40),
         deliverblind: '1',
