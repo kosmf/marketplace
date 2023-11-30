@@ -251,7 +251,7 @@ exports.getOrderList = async (req, res) => {
           
           console.log({payloadUpdSO: payloadUpdSO })
           //UPDATE
-          let SOResult = await salesorders.update(
+          let SOUpdate = await salesorders.update(
             payloadUpdSO,
           {
             where: {
@@ -259,7 +259,7 @@ exports.getOrderList = async (req, res) => {
             }
           })
           
-          console.log({ SOResult: SOResult });
+          console.log({ SOUpdate: SOUpdate });
 
           element.products.map(async(product) => {
               let orderLineNo = uuidv4();  
@@ -364,15 +364,15 @@ exports.getOrderList = async (req, res) => {
 
                   // console.log({payloadUpdSOD: payloadUpdSOD })
                   //UPDATE
-                  let SODResult = await salesorderdetails.update(
+                  let SODUpdate = await salesorderdetails.update(
                     payloadUpdSOD,
                   {
                     where: {
                       orderlineno: orderLineNo
                     }
-                  }).catch((err) => console.log({ errorSODResult: err}))
+                  }).catch((err) => console.log({ errorSODUpdate: err}))
 
-                  console.log({ SODResult: SODResult });
+                  console.log({ SODUpdate: SODUpdate });
 
                 } catch (error) {
                   console.error('Error while using XML RPC for SOD:', error);
