@@ -234,7 +234,40 @@ exports.getOrderList = async (req, res) => {
             user: 'marketplace'
           }
 
+          const reqSO = {
+            uid: orderNo,
+            payload: payloadSO_XMLRPC,
+            marketplace: 'Tokopedia',
+            shop_id: shop.shop_id,
+            executed: new Date(),
+            api: 'SO',
+            phase: 'Request',
+            id: uuidv4()
+          }
+      
+          let logReqSO = await log_rpc.create(reqSO);
+          console.log( {logReqSO:logReqSO }); 
+
+
           let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+
+          const resInsSO = {
+            response : orderNoInternal
+          }
+
+          const resSOD = {
+            uid: orderNo,
+            payload: resInsSO,
+            marketplace: 'Tokopedia',
+            shop_id: shop.shop_id,
+            executed: new Date(),
+            api: 'SO',
+            phase: 'Response',
+            id: uuidv4()
+          }
+      
+          let logResSO = await log_rpc.create(resSOD);
+          console.log( {logResSO:logResSO }); 
 
           let payloadUpdSO = {
             executed: new Date()
