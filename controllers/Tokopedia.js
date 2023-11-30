@@ -204,7 +204,7 @@ exports.getOrderList = async (req, res) => {
           let payloadSO_XMLRPC = {
             debtorno: custBranch.debtorno,
             branchcode: custBranch.branchcode,
-            customerref: element.order_id.substring(0, 50),
+            customerref: element.order_id.toString().substring(0, 50),
             buyername: element.buyer.name.substring(0, 50),
             comments: "",
             orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
