@@ -1,6 +1,6 @@
 const axios = require('axios');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch, log } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace, log_rpc } = require("@Configs/database")
 const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
@@ -131,7 +131,7 @@ exports.getOrderList = async (req, res) => {
       id: uuidv4()
     }
 
-    let insertReqGOLog = await log.create(reqGOLog);
+    let insertReqGOLog = await log_marketplace.create(reqGOLog);
 
     console.log( {insertReqGOLog:insertReqGOLog }); 
 
@@ -149,7 +149,7 @@ exports.getOrderList = async (req, res) => {
         id: uuidv4()
       }
   
-      let insertResGOLog = await log.create(resGOLog);
+      let insertResGOLog = await log_marketplace.create(resGOLog);
       console.log( {insertResGOLog:insertResGOLog }); 
 
       // console.log(JSON.stringify(resApi.data));
@@ -204,22 +204,22 @@ exports.getOrderList = async (req, res) => {
           let payloadSO_XMLRPC = {
             debtorno: custBranch.debtorno,
             branchcode: custBranch.branchcode,
-            customerref: element.order_id,
-            buyername: element.buyer.name,
+            customerref: element.order_id.substring(0, 50),
+            buyername: element.buyer.name.substring(0, 50),
             comments: "",
             orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
             // orddate: moment(new Date()).format('DD/MM/YYYY'),
             ordertype: "GS",
             shipvia: "1",
-            deladd1: element.recipient.address.address_full,
-            deladd2: element.recipient.address.district,
-            deladd3: element.recipient.address.city,
-            deladd4: element.recipient.address.province,
-            deladd5: element.recipient.address.postal_code,
-            deladd6: element.recipient.address.country,
-            contactphone: shopInfo.phone,
-            contactemail: shopInfo.email,
-            deliverto: shopInfo.shop_name,
+            deladd1: element.recipient.address.address_full.substring(0, 40),
+            deladd2: element.recipient.address.district.substring(0, 40),
+            deladd3: element.recipient.address.city.substring(0, 40),
+            deladd4: element.recipient.address.province.substring(0, 40),
+            deladd5: element.recipient.address.postal_code.substring(0, 20),
+            deladd6: element.recipient.address.country.substring(0, 15),
+            contactphone: shopInfo.phone.substring(0, 25),
+            contactemail: shopInfo.email.substring(0, 40),
+            deliverto: shopInfo.shop_name.substring(0, 40),
             deliverblind: '1',
             freightcost: 0,
             fromstkloc: custBranch.defaultlocation,
@@ -313,8 +313,42 @@ exports.getOrderList = async (req, res) => {
                 };
   
                 try {
+
+                  const reqSOD = {
+                    uid: orderLineNo,
+                    payload: payloadSOD_XMLRPC,
+                    marketplace: 'Tokopedia',
+                    shop_id: shop.shop_id,
+                    executed: new Date(),
+                    api: 'SOD',
+                    phase: 'Request',
+                    id: uuidv4()
+                  }
+              
+                  let logReqSOD = await log_rpc.create(reqSOD);
+                  console.log( {logReqSOD:logReqSOD }); 
+
+
                   let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
                   console.log("XML RPC SOD: " + sodRes);
+
+                  const resInsSOD = {
+                    response : sodRes
+                  }
+
+                  const resSOD = {
+                    uid: orderLineNo,
+                    payload: resInsSOD,
+                    marketplace: 'Tokopedia',
+                    shop_id: shop.shop_id,
+                    executed: new Date(),
+                    api: 'SOD',
+                    phase: 'Response',
+                    id: uuidv4()
+                  }
+              
+                  let logResSOD = await log_rpc.create(resSOD);
+                  console.log( {logResSOD:logResSOD }); 
 
                   let payloadUpdSOD = {
                     executed: new Date()

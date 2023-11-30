@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const response = require("@Components/response")
 const xml_rpc = require("@Controllers/xml-rpc-method")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch, log } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace } = require("@Configs/database")
 const crypto = require('crypto');
 const LazadaAPI = require('lazada-open-platform-sdk')
 const { APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA, AUTH_CODE_LAZADA } = process.env
@@ -140,7 +140,7 @@ exports.getOrderList = async (req, res) => {
       id: uuidv4()
     }
 
-    let insertReqGOLog = await log.create(reqGOLog);
+    let insertReqGOLog = await log_marketplace.create(reqGOLog);
 
     console.log( {insertReqGOLog:insertReqGOLog }); 
 
@@ -160,7 +160,7 @@ exports.getOrderList = async (req, res) => {
         id: uuidv4()
       }
   
-      let insertResGOLog = await log.create(resGOLog);
+      let insertResGOLog = await log_marketplace.create(resGOLog);
       console.log( {insertResGOLog:insertResGOLog }); 
 
       return resApi
@@ -185,7 +185,7 @@ exports.getOrderList = async (req, res) => {
       id: uuidv4()
     }
 
-    let insertReqGOLog2 = await log.create(reqGOLog2);
+    let insertReqGOLog2 = await log_marketplace.create(reqGOLog2);
 
     console.log( {insertReqGOLog2:insertReqGOLog2 }); 
 
@@ -205,7 +205,7 @@ exports.getOrderList = async (req, res) => {
         id: uuidv4()
       }
   
-      let insertResGOLog2 = await log.create(resGOLog2);
+      let insertResGOLog2 = await log_marketplace.create(resGOLog2);
       console.log( {insertResGOLog2:insertResGOLog2 }); 
 
       return resApi
@@ -243,7 +243,7 @@ exports.getOrderList = async (req, res) => {
       id: uuidv4()
     }
 
-    let insertReqGMOILog = await log.create(reqGMOILog);
+    let insertReqGMOILog = await log_marketplace.create(reqGMOILog);
 
     console.log( {insertReqGMOILog:insertReqGMOILog }); 
 
@@ -262,7 +262,7 @@ exports.getOrderList = async (req, res) => {
         id: uuidv4()
       }
   
-      let insertResGMOILog = await log.create(resGMOILog);
+      let insertResGMOILog = await log_marketplace.create(resGMOILog);
       console.log( {insertResGMOILog:insertResGMOILog }); 
 
       return resApi
@@ -319,21 +319,21 @@ exports.getOrderList = async (req, res) => {
         let payloadSO_XMLRPC = {
             debtorno: custBranch.debtorno,
             branchcode: custBranch.branchcode,
-            customerref: element.order_number,
-            buyername: element.address_billing.first_name,
+            customerref: element.order_number.substring(0, 50),
+            buyername: element.address_billing.first_name.substring(0, 50),
             comments: element.remarks,
             orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
             ordertype: "GS",
             shipvia: "1",
             deladd1: element.address_shipping.address1.substring(0, 40),
-            deladd2: element.address_shipping.address3,
-            deladd3: element.address_shipping.address4,
-            deladd4: element.address_shipping.address5,
-            deladd5: element.address_shipping.post_code,
-            deladd6: element.address_shipping.country,
-            contactphone: element.address_shipping.phone,
+            deladd2: element.address_shipping.address3.substring(0, 40),
+            deladd3: element.address_shipping.address4.substring(0, 40),
+            deladd4: element.address_shipping.address5.substring(0, 40),
+            deladd5: element.address_shipping.post_code.substring(0, 20),
+            deladd6: element.address_shipping.country.substring(0, 15),
+            contactphone: element.address_shipping.phone.substring(0, 25),
             contactemail: '',
-            deliverto: element.address_shipping.first_name,
+            deliverto: element.address_shipping.first_name.substring(0, 40),
             deliverblind: '1',
             freightcost: 0,
             fromstkloc: custBranch.defaultlocation,

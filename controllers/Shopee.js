@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const response = require("@Components/response")
-const { salesorderdetails, salesorders, debtorsmaster, custbranch, log } = require("@Configs/database")
+const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace } = require("@Configs/database")
 const moment = require('moment');
 const fs = require('fs').promises;
 const xml_rpc = require("@Controllers/xml-rpc-method")
@@ -277,7 +277,7 @@ exports.getOrderList = async (req, res) => {
     id: uuidv4()
   }
 
-  let insertReqGOLog = await log.create(reqGOLog);
+  let insertReqGOLog = await log_marketplace.create(reqGOLog);
 
   console.log( {insertReqGOLog:insertReqGOLog }); 
 
@@ -295,7 +295,7 @@ exports.getOrderList = async (req, res) => {
       id: uuidv4()
     }
   
-    let insertResGOLog = await log.create(resGOLog);
+    let insertResGOLog = await log_marketplace.create(resGOLog);
   
     console.log( {insertResGOLog:insertResGOLog }); 
 
@@ -320,7 +320,7 @@ exports.getOrderList = async (req, res) => {
         id: uuidv4()
       }
     
-      let insertReqGOLogNext = await log.create(reqGOLogNext);
+      let insertReqGOLogNext = await log_marketplace.create(reqGOLogNext);
     
       console.log( {insertReqGOLogNext:insertReqGOLogNext }); 
 
@@ -338,7 +338,7 @@ exports.getOrderList = async (req, res) => {
           id: uuidv4()
         }
       
-        let insertResGOLogNext = await log.create(resGOLogNext);
+        let insertResGOLogNext = await log_marketplace.create(resGOLogNext);
       
         console.log( {insertResGOLogNext:insertResGOLogNext }); 
 
@@ -434,21 +434,21 @@ exports.getOrderList = async (req, res) => {
       let payloadSO_XMLRPC = {
         debtorno: custBranch.debtorno,
         branchcode: custBranch.branchcode,
-        customerref: element.order_sn,
-        buyername: element.buyer_username,
+        customerref: element.order_sn.substring(0, 50),
+        buyername: element.buyer_username.substring(0, 50),
         comments: element.note,
         orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
         ordertype: "GS",
         shipvia: "1",
         deladd1: element.recipient_address.full_address.substring(0, 40),
-        deladd2: element.recipient_address.district,
-        deladd3: element.recipient_address.city,
-        deladd4: element.recipient_address.state,
-        deladd5: element.recipient_address.zipcode,
-        deladd6: element.recipient_address.region,
-        contactphone: element.recipient_address.phone,
+        deladd2: element.recipient_address.district.substring(0, 40),
+        deladd3: element.recipient_address.city.substring(0, 40),
+        deladd4: element.recipient_address.state.substring(0, 40),
+        deladd5: element.recipient_address.zipcode.substring(0, 20),
+        deladd6: element.recipient_address.region.substring(0, 15),
+        contactphone: element.recipient_address.phone.substring(0, 25),
         contactemail: '',
-        deliverto: element.recipient_address.name,
+        deliverto: element.recipient_address.name.substring(0, 40),
         deliverblind: '1',
         freightcost: 0,
         fromstkloc: custBranch.defaultlocation,
