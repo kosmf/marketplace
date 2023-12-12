@@ -9,6 +9,7 @@ const LazadaAPI = require('lazada-open-platform-sdk')
 const { APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA, AUTH_CODE_LAZADA } = process.env
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment-timezone');
+const { Op } = require("sequelize");
 
 const baseDirectory = path.join(__dirname, '../token/lazada'); // Define the absolute directory path
 const aLazadaAPI = new LazadaAPI(APP_KEY_LAZADA, APP_SECRET_LAZADA, REGION_LAZADA)
@@ -103,13 +104,30 @@ exports.getOrderList = async (req, res) => {
       }
     })
 
+    // const soTrx = await salesorders.findAll({
+    //   where: {
+    //     marketplace: "Tokopedia",
+    //     migration: 1,
+    //     executionDate: {
+    //       [Op.between]: [
+    //         moment(currentDate).subtract(14, 'days').toDate(),
+    //         moment(currentDate ).toDate()
+    //       ]
+    //     }
+    //   }
+    // });
+
+    // const customerRefs = soTrx.map(order => order.customerref);
+
+    // console.log("customerRefs : ",customerRefs)
+
     // return response.res200(res, "000", "Success", {custBranch: custBranch, tokenContent: tokenContent })
 
     const jakartaTimezone = 'Asia/Jakarta';
     const now = moment.tz(jakartaTimezone);
 
     // Subtract one day to get yesterday
-    const yesterday = now.subtract(1, 'days');
+    const yesterday = now.subtract(7, 'days');
 
     // Set the time to 00:00:00
     yesterday.startOf('day');
@@ -275,144 +293,147 @@ exports.getOrderList = async (req, res) => {
 
     const orderPromises = orders.map(async(element) => {
 
-        let orderNo = uuidv4();
-    
-        let payloadSO = {
-            orderno: orderNo,
-            debtorno: custBranch.debtorno,
-            branchcode: custBranch.branchcode,
-            customerref: element.order_number,
-            buyername: element.address_billing.first_name,
-            comments: element.remarks,
-            orddate: element.created_at.split(" ")[0],
-            ordertype: "GS",
-            shipvia: "1",
-            deladd1: element.address_shipping.address1,
-            deladd2: element.address_shipping.address3,
-            deladd3: element.address_shipping.address4,
-            deladd4: element.address_shipping.address5,
-            deladd5: element.address_shipping.post_code,
-            deladd6: element.address_shipping.country,
-            contactphone: element.address_shipping.phone,
-            contactemail: '',
-            deliverto: element.address_shipping.first_name,
-            deliverblind: '1',
-            freightcost: '0',
-            fromstkloc: custBranch.defaultlocation,
-            deliverydate: element.updated_at.split(" ")[0],
-            confirmeddate:element.updated_at.split(" ")[0],
-            printedpackingslip: '0',
-            datepackingslipprinted: element.updated_at.split(" ")[0],
-            quotation: '0',
-            quotedate:  element.updated_at.split(" ")[0],
-            poplaced: '0',
-            salesperson: custBranch.salesman,
-            userid: 'marketplace',
-            marketplace: "Lazada",
-            shop: shopId
-        }
+      //12122023
+      // if(customerRefs.includes(element.order_number)) return;
 
-        let insertSO = await salesorders.create(payloadSO);
-
-        console.log( {insertSO:insertSO }); 
-
-        let payloadSO_XMLRPC = {
-            debtorno: custBranch.debtorno,
-            branchcode: custBranch.branchcode,
-            customerref: element.order_number.toString().substring(0, 50),
-            buyername: element.address_billing.first_name.substring(0, 50),
-            comments: element.remarks,
-            orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
-            ordertype: "GS",
-            shipvia: "1",
-            deladd1: element.address_shipping.address1.substring(0, 40),
-            deladd2: element.address_shipping.address3.substring(0, 40),
-            deladd3: element.address_shipping.address4.substring(0, 40),
-            deladd4: element.address_shipping.address5.substring(0, 40),
-            deladd5: element.address_shipping.post_code.substring(0, 20),
-            deladd6: element.address_shipping.country.substring(0, 15),
-            contactphone: element?.address_shipping?.phone?.substring(0, 25) || "",
-            contactemail: '',
-            deliverto: element.address_shipping.first_name.substring(0, 40),
-            deliverblind: '1',
-            freightcost: 0,
-            fromstkloc: custBranch.defaultlocation,
-            deliverydate: moment(new Date()).format('DD/MM/YYYY'),
-            confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
-            printedpackingslip: 0,
-            datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
-            quotation: 0,
-            quotedate:  moment(new Date()).format('DD/MM/YYYY'),
-            poplaced: 0,
-            salesperson: custBranch.salesman,
-            user: 'marketplace'
-        }
-
-        const reqSO = {
-          uid: orderNo,
-          payload: payloadSO_XMLRPC,
-          marketplace: 'Lazada',
-          shop_id: shopId,
-          executed: new Date(),
-          api: 'SO',
-          phase: 'Request',
-          id: uuidv4()
-        }
-    
-        let logReqSO = await log_rpc.create(reqSO);
-        console.log( {logReqSO:logReqSO }); 
-
-        let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
-
-        const resInsSO = {
-          response : orderNoInternal
-        }
-
-        const resSO = {
-          uid: orderNo,
-          payload: resInsSO,
-          marketplace: 'Lazada',
-          shop_id: shopId,
-          executed: new Date(),
-          api: 'SO',
-          phase: 'Response',
-          id: uuidv4()
-        }
-    
-        let logResSO = await log_rpc.create(resSO);
-        console.log( {logResSO:logResSO }); 
-
-        console.log("XML RPC SO: "+orderNoInternal)
+      let orderNo = uuidv4();
   
-        let payloadUpdSO = {
-          executed: new Date()
-        }
-  
-        if(!orderNoInternal[0]) {
-          payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
-          payloadUpdSO["migration"] = 1;
-        } else {
-           payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
-           payloadUpdSO["migration"] = 0;
-        }
-  
-        
-        console.log({payloadUpdSO: payloadUpdSO })
-        //UPDATE
-        let SOUpdate = await salesorders.update(
-          payloadUpdSO,
-        {
-          where: {
-            orderno: orderNo
-          }
-        })
-        
-        console.log({ SOUpdate: SOUpdate });
-  
-        internalOrderNo[element.order_number] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
-        // console.log({ internalOrderNoExist: internalOrderNo })
+      let payloadSO = {
+          orderno: orderNo,
+          debtorno: custBranch.debtorno,
+          branchcode: custBranch.branchcode,
+          customerref: element.order_number,
+          buyername: element.address_billing.first_name,
+          comments: element.remarks,
+          orddate: element.created_at.split(" ")[0],
+          ordertype: "GS",
+          shipvia: "1",
+          deladd1: element.address_shipping.address1,
+          deladd2: element.address_shipping.address3,
+          deladd3: element.address_shipping.address4,
+          deladd4: element.address_shipping.address5,
+          deladd5: element.address_shipping.post_code,
+          deladd6: element.address_shipping.country,
+          contactphone: element.address_shipping.phone,
+          contactemail: '',
+          deliverto: element.address_shipping.first_name,
+          deliverblind: '1',
+          freightcost: '0',
+          fromstkloc: custBranch.defaultlocation,
+          deliverydate: element.updated_at.split(" ")[0],
+          confirmeddate:element.updated_at.split(" ")[0],
+          printedpackingslip: '0',
+          datepackingslipprinted: element.updated_at.split(" ")[0],
+          quotation: '0',
+          quotedate:  element.updated_at.split(" ")[0],
+          poplaced: '0',
+          salesperson: custBranch.salesman,
+          userid: 'marketplace',
+          marketplace: "Lazada",
+          shop: shopId
+      }
 
-        return orderNoInternal;
+      let insertSO = await salesorders.create(payloadSO);
+
+      console.log( {insertSO:insertSO }); 
+
+      let payloadSO_XMLRPC = {
+          debtorno: custBranch.debtorno,
+          branchcode: custBranch.branchcode,
+          customerref: element.order_number.toString().substring(0, 50),
+          buyername: element.address_billing.first_name.substring(0, 50),
+          comments: element.remarks,
+          orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
+          ordertype: "GS",
+          shipvia: "1",
+          deladd1: element.address_shipping.address1.substring(0, 40),
+          deladd2: element.address_shipping.address3.substring(0, 40),
+          deladd3: element.address_shipping.address4.substring(0, 40),
+          deladd4: element.address_shipping.address5.substring(0, 40),
+          deladd5: element.address_shipping.post_code.substring(0, 20),
+          deladd6: element.address_shipping.country.substring(0, 15),
+          contactphone: element?.address_shipping?.phone?.substring(0, 25) || "",
+          contactemail: '',
+          deliverto: element.address_shipping.first_name.substring(0, 40),
+          deliverblind: '1',
+          freightcost: 0,
+          fromstkloc: custBranch.defaultlocation,
+          deliverydate: moment(new Date()).format('DD/MM/YYYY'),
+          confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
+          printedpackingslip: 0,
+          datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
+          quotation: 0,
+          quotedate:  moment(new Date()).format('DD/MM/YYYY'),
+          poplaced: 0,
+          salesperson: custBranch.salesman,
+          user: 'marketplace'
+      }
+
+      const reqSO = {
+        uid: orderNo,
+        payload: payloadSO_XMLRPC,
+        marketplace: 'Lazada',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'SO',
+        phase: 'Request',
+        id: uuidv4()
+      }
+  
+      let logReqSO = await log_rpc.create(reqSO);
+      console.log( {logReqSO:logReqSO }); 
+
+      let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+
+      const resInsSO = {
+        response : orderNoInternal
+      }
+
+      const resSO = {
+        uid: orderNo,
+        payload: resInsSO,
+        marketplace: 'Lazada',
+        shop_id: shopId,
+        executed: new Date(),
+        api: 'SO',
+        phase: 'Response',
+        id: uuidv4()
+      }
+  
+      let logResSO = await log_rpc.create(resSO);
+      console.log( {logResSO:logResSO }); 
+
+      console.log("XML RPC SO: "+orderNoInternal)
+
+      let payloadUpdSO = {
+        executed: new Date()
+      }
+
+      if(!orderNoInternal[0]) {
+        payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
+        payloadUpdSO["migration"] = 1;
+      } else {
+          payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
+          payloadUpdSO["migration"] = 0;
+      }
+
+      
+      console.log({payloadUpdSO: payloadUpdSO })
+      //UPDATE
+      let SOUpdate = await salesorders.update(
+        payloadUpdSO,
+      {
+        where: {
+          orderno: orderNo
+        }
+      })
+      
+      console.log({ SOUpdate: SOUpdate });
+
+      internalOrderNo[element.order_number] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+      // console.log({ internalOrderNoExist: internalOrderNo })
+
+      return orderNoInternal;
     });
 
     // Wait for all order promises to complete
@@ -421,6 +442,9 @@ exports.getOrderList = async (req, res) => {
     console.log({ internalOrderNo: internalOrderNo})
 
     // return response.res200(res, "000", "Success", {internalOrderNo: internalOrderNo, listOrders: listOrders })
+
+    //12122023
+    // listOrderItems.data = listOrderItems.data.filter(order => !customerRefs.includes(order.order_number));
 
     listOrderItems.data.map(async (order) => {
 

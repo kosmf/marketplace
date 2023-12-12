@@ -5,7 +5,7 @@ const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
 const { FS_ID, SHOP_ID } = process.env
 const { v4: uuidv4 } = require('uuid');
-
+const { Op } = require("sequelize");
 
 const getShopInfo = (shopList, shopId) => {
   let shopInfo = {}
@@ -76,7 +76,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(1, 'day');
+  const yesterdayDate = currentDate.clone().subtract(7, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -108,6 +108,23 @@ exports.getOrderList = async (req, res) => {
         debtorno: debtOrsmaster?.debtorno ?? "832"
       }
     })
+
+    // const soTrx = await salesorders.findAll({
+    //   where: {
+    //     marketplace: "Tokopedia",
+    //     migration: 1,
+    //     executionDate: {
+    //       [Op.between]: [
+    //         moment(currentDate).subtract(14, 'days').toDate(),
+    //         moment(currentDate ).toDate()
+    //       ]
+    //     }
+    //   }
+    // });
+
+    // const customerRefs = soTrx.map(order => order.customerref);
+
+    // console.log("customerRefs : ",customerRefs)
 
     const uidLog = uuidv4();
 
@@ -157,6 +174,9 @@ exports.getOrderList = async (req, res) => {
 
       filteredOrder.map(async (element) => {
           console.log(element)
+
+          //12122023
+          // if(customerRefs.includes(element.order_id)) return;
   
           let orderNo = uuidv4();
           let shopInfo = getShopInfo(res.locals.shop, element.shop_id)

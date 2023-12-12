@@ -8,6 +8,7 @@ const xml_rpc = require("@Controllers/xml-rpc-method")
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { FS_ID, SHOP_ID, SHOPEE_CODE } = process.env
+const { Op } = require("sequelize");
 
 const host = 'https://partner.shopeemobile.com';
 const partnerId = 2006477;
@@ -221,7 +222,7 @@ exports.getOrderList = async (req, res) => {
   const currentDate = moment();
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(1, 'day');
+  const yesterdayDate = currentDate.clone().subtract(7, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
@@ -249,6 +250,23 @@ exports.getOrderList = async (req, res) => {
       debtorno: debtOrsmaster?.debtorno ?? "832"
     }
   })
+
+  // const soTrx = await salesorders.findAll({
+  //   where: {
+  //     marketplace: "Tokopedia",
+  //     migration: 1,
+  //     executionDate: {
+  //       [Op.between]: [
+  //         moment(currentDate).subtract(14, 'days').toDate(),
+  //         moment(currentDate ).toDate()
+  //       ]
+  //     }
+  //   }
+  // });
+
+  // const customerRefs = soTrx.map(order => order.customerref);
+
+  // console.log("customerRefs : ",customerRefs)
 
   // return response.res200(res, "000", "Success", {custBranch: custBranch, tokenAccess: tokenAccess })
 
@@ -366,6 +384,10 @@ exports.getOrderList = async (req, res) => {
     // Delete the object and transform to string value order_sn only
     orderList = orderList.map(item => item.order_sn);
     // orderList = orderList.slice(0, 20);
+
+    //12122023
+    // orderList = orderList.filter(order_sn => !customerRefs.includes(order_sn));
+
 
     let orderDetails = []
 
