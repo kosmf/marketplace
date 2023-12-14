@@ -218,6 +218,8 @@ exports.getOrderList = async (req, res) => {
 
   let orderList = []
 
+  const jakartaTimezone = 'Asia/Jakarta';
+
   // Get current date
   const currentDate = moment();
   
@@ -251,24 +253,24 @@ exports.getOrderList = async (req, res) => {
     }
   })
 
-  // const soTrx = await salesorders.findAll({
-  //   where: {
-  //     marketplace: "Tokopedia",
-  //     migration: 1,
-  //     executionDate: {
-  //       [Op.between]: [
-  //         moment(currentDate).subtract(14, 'days').toDate(),
-  //         moment(currentDate ).toDate()
-  //       ]
-  //     }
-  //   }
-  // });
+  const soTrx = await salesorders.findAll({
+    where: {
+      marketplace: "Shopee",
+      migration: '1',
+      executed: {
+        [Op.between]: [
+          moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
+          moment(moment.tz(jakartaTimezone)).toDate()
+        ]
+      }
+    }
+  });
 
-  // const customerRefs = soTrx.map(order => order.customerref);
+  const customerRefs = soTrx.map(order => order.customerref);
 
-  // console.log("customerRefs : ",customerRefs)
+  console.log("customerRefs : ",customerRefs)
 
-  // return response.res200(res, "000", "Success", {custBranch: custBranch, tokenAccess: tokenAccess })
+  // return response.res200(res, "000", "Success", {customerRefs: customerRefs, custBranch: custBranch, tokenAccess: tokenAccess })
 
   // Call public API
   const publicPath = '/api/v2/order/get_order_list';
@@ -386,8 +388,7 @@ exports.getOrderList = async (req, res) => {
     // orderList = orderList.slice(0, 20);
 
     //12122023
-    // orderList = orderList.filter(order_sn => !customerRefs.includes(order_sn));
-
+    orderList = orderList.filter(order_sn => !customerRefs.includes(order_sn));
 
     let orderDetails = []
 
