@@ -90,7 +90,15 @@ module.exports = function(sequelize, DataTypes) {
     shop: {
       type: DataTypes.STRING(255),
       allowNull: true
-    }
+    },
+    customerref: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
+    payload: {
+      type: DataTypes.JSONB,
+      allowNull: false
+    },
   }, {
     sequelize,
     tableName: 'salesorderdetails',

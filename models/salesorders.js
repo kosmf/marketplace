@@ -157,7 +157,11 @@ module.exports = function(sequelize, DataTypes) {
     executed: {
       type: DataTypes.DATE,
       allowNull: true
-    }
+    },
+    payload: {
+      type: DataTypes.JSONB,
+      allowNull: false
+    },
   }, {
     sequelize,
     tableName: 'salesorders',

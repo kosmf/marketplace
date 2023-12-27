@@ -330,110 +330,144 @@ exports.getOrderList = async (req, res) => {
         salesperson: custBranch.salesman,
         userid: 'marketplace',
         marketplace: "Lazada",
-        shop: shopId
+        shop: shopId,
+        executed: new Date(),
+        migration: 0,
+        payload: {
+          debtorno: custBranch.debtorno,
+          branchcode: custBranch.branchcode,
+          customerref: element.order_number.toString().substring(0, 50),
+          buyername: element.address_billing.first_name.substring(0, 50),
+          comments: element.remarks,
+          orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
+          ordertype: "GS",
+          shipvia: "1",
+          deladd1: element.address_shipping.address1.substring(0, 40),
+          deladd2: element.address_shipping.address3.substring(0, 40),
+          deladd3: element.address_shipping.address4.substring(0, 40),
+          deladd4: element.address_shipping.address5.substring(0, 40),
+          deladd5: element.address_shipping.post_code.substring(0, 20),
+          deladd6: element.address_shipping.country.substring(0, 15),
+          contactphone: element?.address_shipping?.phone?.substring(0, 25) || "",
+          contactemail: '',
+          deliverto: element.address_shipping.first_name.substring(0, 40),
+          deliverblind: '1',
+          freightcost: 0,
+          fromstkloc: custBranch.defaultlocation,
+          deliverydate: moment(new Date()).format('DD/MM/YYYY'),
+          confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
+          printedpackingslip: 0,
+          datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
+          quotation: 0,
+          quotedate:  moment(new Date()).format('DD/MM/YYYY'),
+          poplaced: 0,
+          salesperson: custBranch.salesman,
+          user: 'marketplace'
+        }
     }
 
     let insertSO = await salesorders.create(payloadSO);
 
     console.log( {insertSO:insertSO }); 
 
-    let payloadSO_XMLRPC = {
-        debtorno: custBranch.debtorno,
-        branchcode: custBranch.branchcode,
-        customerref: element.order_number.toString().substring(0, 50),
-        buyername: element.address_billing.first_name.substring(0, 50),
-        comments: element.remarks,
-        orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
-        ordertype: "GS",
-        shipvia: "1",
-        deladd1: element.address_shipping.address1.substring(0, 40),
-        deladd2: element.address_shipping.address3.substring(0, 40),
-        deladd3: element.address_shipping.address4.substring(0, 40),
-        deladd4: element.address_shipping.address5.substring(0, 40),
-        deladd5: element.address_shipping.post_code.substring(0, 20),
-        deladd6: element.address_shipping.country.substring(0, 15),
-        contactphone: element?.address_shipping?.phone?.substring(0, 25) || "",
-        contactemail: '',
-        deliverto: element.address_shipping.first_name.substring(0, 40),
-        deliverblind: '1',
-        freightcost: 0,
-        fromstkloc: custBranch.defaultlocation,
-        deliverydate: moment(new Date()).format('DD/MM/YYYY'),
-        confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
-        printedpackingslip: 0,
-        datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
-        quotation: 0,
-        quotedate:  moment(new Date()).format('DD/MM/YYYY'),
-        poplaced: 0,
-        salesperson: custBranch.salesman,
-        user: 'marketplace'
-    }
+    // let payloadSO_XMLRPC = {
+    //     debtorno: custBranch.debtorno,
+    //     branchcode: custBranch.branchcode,
+    //     customerref: element.order_number.toString().substring(0, 50),
+    //     buyername: element.address_billing.first_name.substring(0, 50),
+    //     comments: element.remarks,
+    //     orddate: moment(element.created_at.split(" ")[0], 'YYYY-MM-DD').format('DD/MM/YYYY'),
+    //     ordertype: "GS",
+    //     shipvia: "1",
+    //     deladd1: element.address_shipping.address1.substring(0, 40),
+    //     deladd2: element.address_shipping.address3.substring(0, 40),
+    //     deladd3: element.address_shipping.address4.substring(0, 40),
+    //     deladd4: element.address_shipping.address5.substring(0, 40),
+    //     deladd5: element.address_shipping.post_code.substring(0, 20),
+    //     deladd6: element.address_shipping.country.substring(0, 15),
+    //     contactphone: element?.address_shipping?.phone?.substring(0, 25) || "",
+    //     contactemail: '',
+    //     deliverto: element.address_shipping.first_name.substring(0, 40),
+    //     deliverblind: '1',
+    //     freightcost: 0,
+    //     fromstkloc: custBranch.defaultlocation,
+    //     deliverydate: moment(new Date()).format('DD/MM/YYYY'),
+    //     confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
+    //     printedpackingslip: 0,
+    //     datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
+    //     quotation: 0,
+    //     quotedate:  moment(new Date()).format('DD/MM/YYYY'),
+    //     poplaced: 0,
+    //     salesperson: custBranch.salesman,
+    //     user: 'marketplace'
+    // }
 
-    const reqSO = {
-      uid: orderNo,
-      payload: payloadSO_XMLRPC,
-      marketplace: 'Lazada',
-      shop_id: shopId,
-      executed: new Date(),
-      api: 'SO',
-      phase: 'Request',
-      id: uuidv4()
-    }
+    // const reqSO = {
+    //   uid: orderNo,
+    //   payload: payloadSO_XMLRPC,
+    //   marketplace: 'Lazada',
+    //   shop_id: shopId,
+    //   executed: new Date(),
+    //   api: 'SO',
+    //   phase: 'Request',
+    //   id: uuidv4()
+    // }
 
-    let logReqSO = await log_rpc.create(reqSO);
-    console.log( {logReqSO:logReqSO }); 
+    // let logReqSO = await log_rpc.create(reqSO);
+    // console.log( {logReqSO:logReqSO }); 
 
-    let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+    // let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
 
-    const resInsSO = {
-      response : orderNoInternal
-    }
+    // const resInsSO = {
+    //   response : orderNoInternal
+    // }
 
-    const resSO = {
-      uid: orderNo,
-      payload: resInsSO,
-      marketplace: 'Lazada',
-      shop_id: shopId,
-      executed: new Date(),
-      api: 'SO',
-      phase: 'Response',
-      id: uuidv4()
-    }
+    // const resSO = {
+    //   uid: orderNo,
+    //   payload: resInsSO,
+    //   marketplace: 'Lazada',
+    //   shop_id: shopId,
+    //   executed: new Date(),
+    //   api: 'SO',
+    //   phase: 'Response',
+    //   id: uuidv4()
+    // }
 
-    let logResSO = await log_rpc.create(resSO);
-    console.log( {logResSO:logResSO }); 
+    // let logResSO = await log_rpc.create(resSO);
+    // console.log( {logResSO:logResSO }); 
 
-    console.log("XML RPC SO: "+orderNoInternal)
+    // console.log("XML RPC SO: "+orderNoInternal)
 
-    let payloadUpdSO = {
-      executed: new Date()
-    }
+    // let payloadUpdSO = {
+    //   executed: new Date()
+    // }
 
-    if(!orderNoInternal[0]) {
-      payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
-      payloadUpdSO["migration"] = 1;
-    } else {
-        payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
-        payloadUpdSO["migration"] = 0;
-    }
+    // if(!orderNoInternal[0]) {
+    //   payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
+    //   payloadUpdSO["migration"] = 1;
+    // } else {
+    //     payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
+    //     payloadUpdSO["migration"] = 0;
+    // }
 
     
-    console.log({payloadUpdSO: payloadUpdSO })
-    //UPDATE
-    let SOUpdate = await salesorders.update(
-      payloadUpdSO,
-    {
-      where: {
-        orderno: orderNo
-      }
-    })
+    // console.log({payloadUpdSO: payloadUpdSO })
+    // //UPDATE
+    // let SOUpdate = await salesorders.update(
+    //   payloadUpdSO,
+    // {
+    //   where: {
+    //     orderno: orderNo
+    //   }
+    // })
     
-    console.log({ SOUpdate: SOUpdate });
+    // console.log({ SOUpdate: SOUpdate });
 
-    internalOrderNo[element.order_number] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+    // internalOrderNo[element.order_number] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+    internalOrderNo[element.order_number] = "-"
     // console.log({ internalOrderNoExist: internalOrderNo })
 
-    return orderNoInternal;
+    return;
   });
 
   // Wait for all order promises to complete
@@ -453,7 +487,8 @@ exports.getOrderList = async (req, res) => {
 
           let payloadSOD = {
               orderlineno: orderLineNo,
-              orderno: internalOrderNo[order.order_number],     
+              // orderno: internalOrderNo[order.order_number],     
+              orderno: "-",     
               koli:'',
               stkcode: element.sku,
               qtyinvoiced:'0',
@@ -470,7 +505,26 @@ exports.getOrderList = async (req, res) => {
               // itemdue: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
               poline:0,
               marketplace: "Lazada",
-              shop: shopId
+              shop: shopId,
+              customerref: order.order_number,
+              executed: new Date(),
+              migration: 0,
+              payload:{
+                orderno: "-",
+                koli: '',
+                stkcode: element.sku,
+                qtyinvoiced: 0,
+                unitprice: element.item_price,
+                quantity: 1,
+                estimate: 0,
+                discountpercent: 0,
+                discountpercent2: 0,
+                actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+                completed: 0,
+                narrative: 'This is a comment.',
+                itemdue: moment(new Date()).format('YYYY-MM-DD'),
+                poline: '0',
+              }
           }
 
           try {
@@ -481,91 +535,91 @@ exports.getOrderList = async (req, res) => {
             // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
           }
 
-          if(internalOrderNo[order.order_sn] != "00000"){
+          // if(internalOrderNo[order.order_sn] != "00000"){
 
-            const payloadSOD_XMLRPC = {
-              // orderlineno: 3, incremental, tidak perlu di request
-              orderno: internalOrderNo[order.order_number],
-              koli: '',
-              stkcode: element.sku,
-              qtyinvoiced: 0,
-              unitprice: element.item_price,
-              quantity: 1,
-              estimate: 0,
-              discountpercent: 0,
-              discountpercent2: 0,
-              actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
-              completed: 0,
-              narrative: 'This is a comment.',
-              itemdue: moment(new Date()).format('YYYY-MM-DD'),
-              poline: '0',
-            };
+          //   const payloadSOD_XMLRPC = {
+          //     // orderlineno: 3, incremental, tidak perlu di request
+          //     orderno: internalOrderNo[order.order_number],
+          //     koli: '',
+          //     stkcode: element.sku,
+          //     qtyinvoiced: 0,
+          //     unitprice: element.item_price,
+          //     quantity: 1,
+          //     estimate: 0,
+          //     discountpercent: 0,
+          //     discountpercent2: 0,
+          //     actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+          //     completed: 0,
+          //     narrative: 'This is a comment.',
+          //     itemdue: moment(new Date()).format('YYYY-MM-DD'),
+          //     poline: '0',
+          //   };
 
-            try {
+          //   try {
 
-              const reqSOD = {
-                uid: orderLineNo,
-                payload: payloadSOD_XMLRPC,
-                marketplace: 'Lazada',
-                shop_id: shopId,
-                executed: new Date(),
-                api: 'SOD',
-                phase: 'Request',
-                id: uuidv4()
-              }
+          //     const reqSOD = {
+          //       uid: orderLineNo,
+          //       payload: payloadSOD_XMLRPC,
+          //       marketplace: 'Lazada',
+          //       shop_id: shopId,
+          //       executed: new Date(),
+          //       api: 'SOD',
+          //       phase: 'Request',
+          //       id: uuidv4()
+          //     }
           
-              let logReqSOD = await log_rpc.create(reqSOD);
-              console.log( {logReqSOD:logReqSOD }); 
+          //     let logReqSOD = await log_rpc.create(reqSOD);
+          //     console.log( {logReqSOD:logReqSOD }); 
 
-              let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
-              console.log("XML RPC SOD: " + sodRes);
+          //     let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+          //     console.log("XML RPC SOD: " + sodRes);
 
-              const resInsSOD = {
-                response : sodRes
-              }
+          //     const resInsSOD = {
+          //       response : sodRes
+          //     }
 
-              const resSOD = {
-                uid: orderLineNo,
-                payload: resInsSOD,
-                marketplace: 'Lazada',
-                shop_id: shopId,
-                executed: new Date(),
-                api: 'SOD',
-                phase: 'Response',
-                id: uuidv4()
-              }
+          //     const resSOD = {
+          //       uid: orderLineNo,
+          //       payload: resInsSOD,
+          //       marketplace: 'Lazada',
+          //       shop_id: shopId,
+          //       executed: new Date(),
+          //       api: 'SOD',
+          //       phase: 'Response',
+          //       id: uuidv4()
+          //     }
           
-              let logResSOD = await log_rpc.create(resSOD);
-              console.log( {logResSOD:logResSOD }); 
+          //     let logResSOD = await log_rpc.create(resSOD);
+          //     console.log( {logResSOD:logResSOD }); 
 
-              let payloadUpdSOD = {
-                executed: new Date()
-              }
+          //     let payloadUpdSOD = {
+          //       executed: new Date()
+          //     }
     
-              if(!sodRes[0]) {
-                payloadUpdSOD["success"] = JSON.stringify(sodRes);
-                payloadUpdSOD["migration"] = 1;
-              } else {
-                payloadUpdSOD["error"] = JSON.stringify(sodRes);
-                payloadUpdSOD["migration"] = 0;
-              }
+          //     if(!sodRes[0]) {
+          //       payloadUpdSOD["success"] = JSON.stringify(sodRes);
+          //       payloadUpdSOD["migration"] = 1;
+          //     } else {
+          //       payloadUpdSOD["error"] = JSON.stringify(sodRes);
+          //       payloadUpdSOD["migration"] = 0;
+          //     }
 
-              // console.log({payloadUpdSOD: payloadUpdSOD })
-              //UPDATE
-              let SODUpdate = await salesorderdetails.update(
-                payloadUpdSOD,
-              {
-                where: {
-                  orderlineno: orderLineNo
-                }
-              }).catch((err) => console.log({ errorSODUpdate: err}))
+          //     // console.log({payloadUpdSOD: payloadUpdSOD })
+          //     //UPDATE
+          //     let SODUpdate = await salesorderdetails.update(
+          //       payloadUpdSOD,
+          //     {
+          //       where: {
+          //         orderlineno: orderLineNo
+          //       }
+          //     }).catch((err) => console.log({ errorSODUpdate: err}))
 
-              console.log({ SODUpdate: SODUpdate });
-            } catch (error) {
-              console.error('Error while using XML RPC for SOD:', error);
-              // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
-            }
-          }
+          //     console.log({ SODUpdate: SODUpdate });
+          //   } catch (error) {
+          //     console.error('Error while using XML RPC for SOD:', error);
+          //     // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+          //   }
+          // }
       })
   });
 

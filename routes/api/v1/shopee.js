@@ -40,6 +40,14 @@ router.route("/getOrderDetail")
         })
     });
 
+router.route("/migration")
+    .get(async (req, res, next) => {
+        await shopeController.xmlRPC(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
 router.all("*", index);
 
 module.exports = router;

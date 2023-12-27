@@ -447,110 +447,144 @@ exports.getOrderList = async (req, res) => {
           salesperson: custBranch.salesman,
           userid: 'marketplace',
           marketplace: "Shopee",
-          shop: shopId
+          shop: shopId,
+          executed: new Date(),
+          migration: 0,
+          payload:{
+            debtorno: custBranch.debtorno,
+            branchcode: custBranch.branchcode,
+            customerref: element.order_sn.substring(0, 50),
+            buyername: element.buyer_username.substring(0, 50),
+            comments: element.note,
+            orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
+            ordertype: "GS",
+            shipvia: "1",
+            deladd1: element.recipient_address.full_address.substring(0, 40),
+            deladd2: element.recipient_address.district.substring(0, 40),
+            deladd3: element.recipient_address.city.substring(0, 40),
+            deladd4: element.recipient_address.state.substring(0, 40),
+            deladd5: element.recipient_address.zipcode.substring(0, 20),
+            deladd6: element.recipient_address.region.substring(0, 15),
+            contactphone: element?.recipient_address?.phone?.substring(0, 25) || "",
+            contactemail: '',
+            deliverto: element.recipient_address.name.substring(0, 40),
+            deliverblind: '1',
+            freightcost: 0,
+            fromstkloc: custBranch.defaultlocation,
+            deliverydate: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+            confirmeddate:moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+            printedpackingslip: 0,
+            datepackingslipprinted: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+            quotation: 0,
+            quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+            poplaced: 0,
+            salesperson: custBranch.salesman,
+            user: 'marketplace',
+          }
       }
 
       let insertSO = await salesorders.create(payloadSO);
 
       // console.log( {insertSO:insertSO }); 
 
-      let payloadSO_XMLRPC = {
-        debtorno: custBranch.debtorno,
-        branchcode: custBranch.branchcode,
-        customerref: element.order_sn.substring(0, 50),
-        buyername: element.buyer_username.substring(0, 50),
-        comments: element.note,
-        orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
-        ordertype: "GS",
-        shipvia: "1",
-        deladd1: element.recipient_address.full_address.substring(0, 40),
-        deladd2: element.recipient_address.district.substring(0, 40),
-        deladd3: element.recipient_address.city.substring(0, 40),
-        deladd4: element.recipient_address.state.substring(0, 40),
-        deladd5: element.recipient_address.zipcode.substring(0, 20),
-        deladd6: element.recipient_address.region.substring(0, 15),
-        contactphone: element?.recipient_address?.phone?.substring(0, 25) || "",
-        contactemail: '',
-        deliverto: element.recipient_address.name.substring(0, 40),
-        deliverblind: '1',
-        freightcost: 0,
-        fromstkloc: custBranch.defaultlocation,
-        deliverydate: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-        confirmeddate:moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-        printedpackingslip: 0,
-        datepackingslipprinted: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-        quotation: 0,
-        quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
-        poplaced: 0,
-        salesperson: custBranch.salesman,
-        user: 'marketplace',
-      }
+      // let payloadSO_XMLRPC = {
+      //   debtorno: custBranch.debtorno,
+      //   branchcode: custBranch.branchcode,
+      //   customerref: element.order_sn.substring(0, 50),
+      //   buyername: element.buyer_username.substring(0, 50),
+      //   comments: element.note,
+      //   orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
+      //   ordertype: "GS",
+      //   shipvia: "1",
+      //   deladd1: element.recipient_address.full_address.substring(0, 40),
+      //   deladd2: element.recipient_address.district.substring(0, 40),
+      //   deladd3: element.recipient_address.city.substring(0, 40),
+      //   deladd4: element.recipient_address.state.substring(0, 40),
+      //   deladd5: element.recipient_address.zipcode.substring(0, 20),
+      //   deladd6: element.recipient_address.region.substring(0, 15),
+      //   contactphone: element?.recipient_address?.phone?.substring(0, 25) || "",
+      //   contactemail: '',
+      //   deliverto: element.recipient_address.name.substring(0, 40),
+      //   deliverblind: '1',
+      //   freightcost: 0,
+      //   fromstkloc: custBranch.defaultlocation,
+      //   deliverydate: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+      //   confirmeddate:moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+      //   printedpackingslip: 0,
+      //   datepackingslipprinted: moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+      //   quotation: 0,
+      //   quotedate:  moment.unix(element.ship_by_date).format('DD/MM/YYYY'),
+      //   poplaced: 0,
+      //   salesperson: custBranch.salesman,
+      //   user: 'marketplace',
+      // }
 
-      // console.log({ payloadSO_XMLRPC: payloadSO_XMLRPC})
+      // // console.log({ payloadSO_XMLRPC: payloadSO_XMLRPC})
 
-      const reqSO = {
-        uid: orderNo,
-        payload: payloadSO_XMLRPC,
-        marketplace: 'Shopee',
-        shop_id: shopId,
-        executed: new Date(),
-        api: 'SO',
-        phase: 'Request',
-        id: uuidv4()
-      }
+      // const reqSO = {
+      //   uid: orderNo,
+      //   payload: payloadSO_XMLRPC,
+      //   marketplace: 'Shopee',
+      //   shop_id: shopId,
+      //   executed: new Date(),
+      //   api: 'SO',
+      //   phase: 'Request',
+      //   id: uuidv4()
+      // }
   
-      let logReqSO = await log_rpc.create(reqSO);
-      console.log( {logReqSO:logReqSO });
+      // let logReqSO = await log_rpc.create(reqSO);
+      // console.log( {logReqSO:logReqSO });
 
-      let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
-      console.log("XML RPC SO: "+orderNoInternal)
+      // let orderNoInternal = await xml_rpc.insertSO(payloadSO_XMLRPC)
+      // console.log("XML RPC SO: "+orderNoInternal)
 
-      const resInsSO = {
-        response : orderNoInternal
-      }
+      // const resInsSO = {
+      //   response : orderNoInternal
+      // }
 
-      const resSO = {
-        uid: orderNo,
-        payload: resInsSO,
-        marketplace: 'Shopee',
-        shop_id: shopId,
-        executed: new Date(),
-        api: 'SO',
-        phase: 'Response',
-        id: uuidv4()
-      }
+      // const resSO = {
+      //   uid: orderNo,
+      //   payload: resInsSO,
+      //   marketplace: 'Shopee',
+      //   shop_id: shopId,
+      //   executed: new Date(),
+      //   api: 'SO',
+      //   phase: 'Response',
+      //   id: uuidv4()
+      // }
   
-      let logResSO = await log_rpc.create(resSO);
-      // console.log( {logResSO:logResSO }); 
+      // let logResSO = await log_rpc.create(resSO);
+      // // console.log( {logResSO:logResSO }); 
 
-      let payloadUpdSO = {
-        executed: new Date()
-      }
+      // let payloadUpdSO = {
+      //   executed: new Date()
+      // }
 
-      if(!orderNoInternal[0]) {
-        payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
-        payloadUpdSO["migration"] = 1;
-      } else {
-         payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
-         payloadUpdSO["migration"] = 0;
-      }
+      // if(!orderNoInternal[0]) {
+      //   payloadUpdSO["success"] = JSON.stringify(orderNoInternal);
+      //   payloadUpdSO["migration"] = 1;
+      // } else {
+      //    payloadUpdSO["error"] = JSON.stringify(orderNoInternal);
+      //    payloadUpdSO["migration"] = 0;
+      // }
 
       
-      // console.log({payloadUpdSO: payloadUpdSO })
-      //UPDATE
-      let SOUpdate = await salesorders.update(
-        payloadUpdSO,
-      {
-        where: {
-          orderno: orderNo
-        }
-      })
+      // // console.log({payloadUpdSO: payloadUpdSO })
+      // //UPDATE
+      // let SOUpdate = await salesorders.update(
+      //   payloadUpdSO,
+      // {
+      //   where: {
+      //     orderno: orderNo
+      //   }
+      // })
       
       // console.log({ SOUpdate: SOUpdate });
 
-      internalOrderNo[element.order_sn] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+      // internalOrderNo[element.order_sn] = (!orderNoInternal[0] ? orderNoInternal[1]:"00000")
+      internalOrderNo[element.order_sn] = "-"
 
-      return orderNoInternal;
+      return;
     });
 
     // Wait for all order promises to complete
@@ -566,7 +600,8 @@ exports.getOrderList = async (req, res) => {
 
         let payloadSOD = {
           orderlineno: orderLineNo,
-          orderno: internalOrderNo[order.order_sn],     
+          // orderno: internalOrderNo[order.order_sn],     
+          orderno: "-",     
           koli:'',
           stkcode: element.model_sku,
           qtyinvoiced:'0',
@@ -582,21 +617,12 @@ exports.getOrderList = async (req, res) => {
           itemdue: moment(new Date()).format('YYYY-MM-DD'),
           poline:0,
           marketplace: "Shopee",
-          shop: shopId
-        }
-      
-        try {
-          let insertSOD = await salesorderdetails.create(payloadSOD);
-          // console.log({ insertSOD: insertSOD });
-        } catch (error) {
-          console.error('Error while creating salesorderdetails:', error);
-          // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
-        }
-        
-        if(internalOrderNo[order.order_sn] != "00000"){
-          const payloadSOD_XMLRPC = {
-            // orderlineno: 3, incremental, tidak perlu di request
-            orderno: internalOrderNo[order.order_sn],
+          shop: shopId,
+          executed: new Date(),
+          migration: 0,
+          customerref: order.order_sn,
+          payload:{
+            orderno: "-",
             koli: '',
             stkcode: element.model_sku,
             qtyinvoiced: 0,
@@ -611,73 +637,102 @@ exports.getOrderList = async (req, res) => {
             itemdue: moment(new Date()).format('YYYY-MM-DD'),
             // itemdue: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
             poline: '0',
-          };
-        
-          try {
-
-            const reqSOD = {
-              uid: orderLineNo,
-              payload: payloadSOD_XMLRPC,
-              marketplace: 'Shopee',
-              shop_id: shopId,
-              executed: new Date(),
-              api: 'SOD',
-              phase: 'Request',
-              id: uuidv4()
-            }
-        
-            let logReqSOD = await log_rpc.create(reqSOD);
-            // console.log( {logReqSOD:logReqSOD }); 
-
-            let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
-            // console.log("XML RPC SOD: " + sodRes);
-
-            const resInsSOD = {
-              response : sodRes
-            }
-
-            const resSOD = {
-              uid: orderLineNo,
-              payload: resInsSOD,
-              marketplace: 'Shopee',
-              shop_id: shopId,
-              executed: new Date(),
-              api: 'SOD',
-              phase: 'Response',
-              id: uuidv4()
-            }
-        
-            let logResSOD = await log_rpc.create(resSOD);
-            // console.log( {logResSOD:logResSOD }); 
-
-            let payloadUpdSOD = {
-              executed: new Date()
-            }
-  
-            if(!sodRes[0]) {
-              payloadUpdSOD["success"] = JSON.stringify(sodRes);
-              payloadUpdSOD["migration"] = 1;
-            } else {
-              payloadUpdSOD["error"] = JSON.stringify(sodRes);
-              payloadUpdSOD["migration"] = 0;
-            }
-
-            // console.log({payloadUpdSOD: payloadUpdSOD })
-            //UPDATE
-            let SODUpdate = await salesorderdetails.update(
-              payloadUpdSOD,
-            {
-              where: {
-                orderlineno: orderLineNo
-              }
-            }).catch((err) => console.log({ errorSODUpdate: err}))
-
-            // console.log({ SODUpdate: SODUpdate });
-          } catch (error) {
-            console.error('Error while using XML RPC for SOD:', error);
-            // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
           }
         }
+      
+        try {
+          let insertSOD = await salesorderdetails.create(payloadSOD);
+          // console.log({ insertSOD: insertSOD });
+        } catch (error) {
+          console.error('Error while creating salesorderdetails:', error);
+          // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+        }
+        
+        // if(internalOrderNo[order.order_sn] != "00000"){
+        //   const payloadSOD_XMLRPC = {
+        //     // orderlineno: 3, incremental, tidak perlu di request
+        //     orderno: internalOrderNo[order.order_sn],
+        //     koli: '',
+        //     stkcode: element.model_sku,
+        //     qtyinvoiced: 0,
+        //     unitprice: element.model_discounted_price,
+        //     quantity: element.model_quantity_purchased,
+        //     estimate: 0,
+        //     discountpercent: 0,
+        //     discountpercent2: 0,
+        //     actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+        //     completed: 0,
+        //     narrative: 'This is a comment.',
+        //     itemdue: moment(new Date()).format('YYYY-MM-DD'),
+        //     // itemdue: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        //     poline: '0',
+        //   };
+        
+        //   try {
+
+        //     const reqSOD = {
+        //       uid: orderLineNo,
+        //       payload: payloadSOD_XMLRPC,
+        //       marketplace: 'Shopee',
+        //       shop_id: shopId,
+        //       executed: new Date(),
+        //       api: 'SOD',
+        //       phase: 'Request',
+        //       id: uuidv4()
+        //     }
+        
+        //     let logReqSOD = await log_rpc.create(reqSOD);
+        //     // console.log( {logReqSOD:logReqSOD }); 
+
+        //     let sodRes = await xml_rpc.insertSOD(payloadSOD_XMLRPC);
+        //     // console.log("XML RPC SOD: " + sodRes);
+
+        //     const resInsSOD = {
+        //       response : sodRes
+        //     }
+
+        //     const resSOD = {
+        //       uid: orderLineNo,
+        //       payload: resInsSOD,
+        //       marketplace: 'Shopee',
+        //       shop_id: shopId,
+        //       executed: new Date(),
+        //       api: 'SOD',
+        //       phase: 'Response',
+        //       id: uuidv4()
+        //     }
+        
+        //     let logResSOD = await log_rpc.create(resSOD);
+        //     // console.log( {logResSOD:logResSOD }); 
+
+        //     let payloadUpdSOD = {
+        //       executed: new Date()
+        //     }
+  
+        //     if(!sodRes[0]) {
+        //       payloadUpdSOD["success"] = JSON.stringify(sodRes);
+        //       payloadUpdSOD["migration"] = 1;
+        //     } else {
+        //       payloadUpdSOD["error"] = JSON.stringify(sodRes);
+        //       payloadUpdSOD["migration"] = 0;
+        //     }
+
+        //     // console.log({payloadUpdSOD: payloadUpdSOD })
+        //     //UPDATE
+        //     let SODUpdate = await salesorderdetails.update(
+        //       payloadUpdSOD,
+        //     {
+        //       where: {
+        //         orderlineno: orderLineNo
+        //       }
+        //     }).catch((err) => console.log({ errorSODUpdate: err}))
+
+        //     // console.log({ SODUpdate: SODUpdate });
+        //   } catch (error) {
+        //     console.error('Error while using XML RPC for SOD:', error);
+        //     // Handle the error appropriately, e.g., log it, return an error response, or perform any necessary actions.
+        //   }
+        // }
         })
       })
 
@@ -785,4 +840,181 @@ exports.getOrderDetail = async (req, res) => {
     return response.res200(res, "000", "OrderDetail Failed", { error: error.response.data})
   });
 
+}
+
+exports.xmlRPC = async (req, res) => {
+  const jakartaTimezone = 'Asia/Jakarta';
+  const currentDate = moment();
+  const yesterdayDate = currentDate.clone();
+  const fromTime = yesterdayDate.startOf('day').unix();
+  const toTime = yesterdayDate.endOf('day').unix();
+
+  const soList = await salesorders.findAll({
+    where: {
+      executed: {
+        [Op.between]: [
+          moment.unix(fromTime).toDate(),
+          moment.unix(toTime).toDate()
+        ]
+      }
+    }
+  });
+
+  const sodList = await salesorderdetails.findAll({
+    where: {
+      executed: {
+        [Op.between]: [
+          moment.unix(fromTime).toDate(),
+          moment.unix(toTime).toDate()
+        ]
+      }
+    }
+  });
+
+  let orderNoList = [];
+
+  for (const payload of soList) {
+    const reqSO = {
+      uid: uuidv4(),
+      payload: payload.payload,
+      marketplace: payload.marketplace,
+      shop_id: payload.shop,
+      executed: new Date(),
+      api: 'SO',
+      phase: 'Request',
+      id: uuidv4()
+    };
+
+    let logReqSO = await log_rpc.create(reqSO);
+    console.log({ logReqSO: logReqSO });
+
+    let insertSO = await xml_rpc.insertSO(payload.payload);
+    console.log("XML RPC SO: " + insertSO);
+
+    let data = {}
+    data[payload.customerref] = insertSO
+    orderNoList.push(data);
+
+    const resSO = {
+      uid: uuidv4(),
+      payload: {
+        response: insertSO
+      },
+      marketplace: payload.marketplace,
+      shop_id: payload.shop,
+      executed: new Date(),
+      api: 'SO',
+      phase: 'Response',
+      id: uuidv4()
+    };
+
+    let logResSO = await log_rpc.create(resSO);
+    console.log({ logResSO: logResSO });
+
+    // UPDATE
+    let payloadUpdSO = {};
+
+    if (!insertSO[0]) {
+      payloadUpdSO["success"] = JSON.stringify(insertSO);
+      payloadUpdSO["migration"] = 1;
+    } else {
+      payloadUpdSO["error"] = JSON.stringify(insertSO);
+      payloadUpdSO["migration"] = 0;
+    }
+
+    console.log({ payloadUpdSO: payloadUpdSO });
+
+    let SOUpdate = await salesorders.update(payloadUpdSO, {
+      where: {
+        orderno: payload.orderno
+      }
+    }).catch((err) => console.log({ errorSOUpdate: err }));
+
+    console.log({ SOUpdate: SOUpdate });
+  }
+
+  let sodListResult = [];
+
+  for (const payload of sodList) {
+
+    //replace orderno
+    const value = getValueByKey(orderNoList, payload.customerref)
+    payload.payload.orderno = value && value[1] ? value[1] : 0;
+
+    console.log({ payload: payload.payload})
+    console.log({ orderno: payload.payload.orderno})
+    console.log({ value: value})
+    console.log("CONTINUEEE")
+
+    if(!payload.payload.orderno) continue;
+
+    const reqSOD = {
+      uid: uuidv4(),
+      payload: payload.payload,
+      marketplace: payload.marketplace,
+      shop_id: payload.shop,
+      executed: new Date(),
+      api: 'SOD',
+      phase: 'Request',
+      id: uuidv4()
+    }
+
+    let logReqSOD = await log_rpc.create(reqSOD);
+    console.log( {logReqSOD:logReqSOD }); 
+
+    let insertSOD = await xml_rpc.insertSOD(payload.payload);
+    console.log("XML RPC SOD: " + insertSOD);
+
+    let data = {}
+    data[payload.customerref] = insertSOD
+    sodListResult.push(data);
+
+    const resSOD = {
+      uid: uuidv4(),
+      payload: {
+        response: insertSOD
+      },
+      marketplace: payload.marketplace,
+      shop_id: payload.shop,
+      executed: new Date(),
+      api: 'SOD',
+      phase: 'Response',
+      id: uuidv4()
+    }
+
+    let logResSOD = await log_rpc.create(resSOD);
+    console.log( {logResSOD:logResSOD }); 
+
+    let payloadUpdSOD = {};
+
+    if(!insertSOD[0]) {
+      payloadUpdSOD["success"] = JSON.stringify(insertSOD);
+      payloadUpdSOD["payload"] = payload.payload;
+      payloadUpdSOD["migration"] = 1;
+    } else {
+      payloadUpdSOD["error"] = JSON.stringify(insertSOD);
+      payloadUpdSOD["payload"] = payload.payload;
+      payloadUpdSOD["migration"] = 0;
+    }
+
+    // console.log({payloadUpdSOD: payloadUpdSOD })
+
+    //UPDATE
+    let SODUpdate = await salesorderdetails.update(
+      payloadUpdSOD,
+    {
+      where: {
+        orderlineno: payload.orderlineno
+      }
+    }).catch((err) => console.log({ errorSODUpdate: err}))
+
+    console.log({ SODUpdate: SODUpdate });
+  }
+
+  return response.res200(res, "000", "OrderList Success", { countSO: orderNoList.length, countSOD: sodListResult.length, resultSO: orderNoList, resultSOD: sodListResult });
+};
+
+const getValueByKey = (array, keyToFind) => {
+  const foundObject = array.find(obj => keyToFind in obj);
+  return foundObject ? foundObject[keyToFind] : null;
 }
