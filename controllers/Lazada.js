@@ -169,7 +169,7 @@ exports.getOrderList = async (req, res) => {
 
     const resGOLog = {
       uid: uidLog,
-      payload: resApi.data,
+      payload: resApi,
       marketplace: 'Lazada',
       shop_id: shopId,
       executed: new Date(),
@@ -214,7 +214,7 @@ exports.getOrderList = async (req, res) => {
 
     const resGOLog2 = {
       uid: uidLog,
-      payload: resApi.data,
+      payload: resApi,
       marketplace: 'Lazada',
       shop_id: shopId,
       executed: new Date(),
@@ -271,7 +271,7 @@ exports.getOrderList = async (req, res) => {
 
     const resGMOILog = {
       uid: uidLog,
-      payload: resApi.data,
+      payload: resApi,
       marketplace: 'Lazada',
       shop_id: shopId,
       executed: new Date(),
