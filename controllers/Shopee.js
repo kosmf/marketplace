@@ -228,9 +228,12 @@ exports.getOrderList = async (req, res) => {
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
+
+  // Calculate the end date (yesterday)
+  const endDate = currentDate.clone().subtract(1, 'day');
   
   // Set the time to 23:59:59 for yesterday
-  const toTime = yesterdayDate.endOf('day').unix();
+  const toTime = endDate.endOf('day').unix();
 
   const timestamp = Math.floor(Date.now() / 1000)
   const time_range_field = 'create_time'
@@ -856,6 +859,10 @@ exports.xmlRPC = async (req, res) => {
           moment.unix(fromTime).toDate(),
           moment.unix(toTime).toDate()
         ]
+      },
+      migration: "0",
+      payload: {
+        [Op.not]: null
       }
     }
   });
@@ -867,6 +874,10 @@ exports.xmlRPC = async (req, res) => {
           moment.unix(fromTime).toDate(),
           moment.unix(toTime).toDate()
         ]
+      },
+      migration: "0",
+      payload: {
+        [Op.not]: null
       }
     }
   });
