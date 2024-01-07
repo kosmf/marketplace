@@ -118,7 +118,7 @@ exports.getOrderList = async (req, res) => {
       where: {
         marketplace: "Tokopedia",
         migration: "1",
-        executionDate: {
+        executed: {
           [Op.between]: [
             moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
             moment(moment.tz(jakartaTimezone)).toDate()
