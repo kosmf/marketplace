@@ -78,7 +78,7 @@ exports.getOrderList = async (req, res) => {
   const jakartaTimezone = 'Asia/Jakarta';
   
   // Calculate yesterday's date
-  const yesterdayDate = currentDate.clone().subtract(7, 'day');
+  const yesterdayDate = currentDate.clone().subtract(3, 'day');
   
   // Set the time to 00:00:00 for yesterday
   const fromTime = yesterdayDate.startOf('day').unix();
