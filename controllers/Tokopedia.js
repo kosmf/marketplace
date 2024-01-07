@@ -98,6 +98,7 @@ exports.getOrderList = async (req, res) => {
 
   shopList.map(async (shop) => {
 
+    if(shop.shop_id) return;
     shopExist[shop.shop_name] = {}
 
     const debtOrsmaster = await debtorsmaster.findOne({
