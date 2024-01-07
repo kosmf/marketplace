@@ -170,7 +170,7 @@ exports.getOrderList = async (req, res) => {
 
       const resGOLog = {
         uid: uidLog,
-        payload: resApi,
+        payload: resApi.data,
         marketplace: 'Tokopedia',
         shop_id: shop.shop_id,
         executed: new Date(),
