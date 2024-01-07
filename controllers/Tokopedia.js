@@ -87,7 +87,10 @@ exports.getOrderList = async (req, res) => {
   const endDate = currentDate.clone().subtract(1, 'day');
 
   // Set the time to 23:59:59 for yesterday
-  const toTime = endDate.endOf('day').unix();
+  // const toTime = endDate.endOf('day').unix();
+
+  // Set the time to 23:59:59 for yesterday
+  const toTime = yesterdayDate.endOf('day').unix();
   
   console.log('Unix timestamp for from_date (00:00):', fromTime);
   console.log('Unix timestamp for to_date (23:59):', toTime);
