@@ -84,7 +84,7 @@ exports.getOrderList = async (req, res) => {
   const fromTime = yesterdayDate.startOf('day').unix();
 
   // Calculate the end date (yesterday)
-  // const endDate = currentDate.clone().subtract(1, 'day');
+  const endDate = currentDate.clone().subtract(1, 'day');
 
   // Set the time to 23:59:59 for yesterday
   const toTime = endDate.endOf('day').unix();
