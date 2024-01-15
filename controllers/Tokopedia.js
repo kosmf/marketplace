@@ -123,13 +123,13 @@ exports.getOrderList = async (req, res) => {
     const soTrx = await salesorders.findAll({
       where: {
         marketplace: "Tokopedia",
-        migration: "1",
-        executed: {
-          [Op.between]: [
-            moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
-            moment(moment.tz(jakartaTimezone)).toDate()
-          ]
-        }
+        // migration: "1",
+        // executed: {
+        //   [Op.between]: [
+        //     moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
+        //     moment(moment.tz(jakartaTimezone)).toDate()
+        //   ]
+        // }
       }
     });
 
@@ -185,13 +185,13 @@ exports.getOrderList = async (req, res) => {
       // console.log(JSON.stringify(resApi.data));
       let filteredOrder =  resApi["data"].data.filter(order => order.order_status >= 500)
 
-      filteredOrder = filteredOrder.filter(order => !customerRefs.includes(order.order_id));
+      filteredOrder = filteredOrder.filter(order => !customerRefs.includes(order.invoice_ref_num));
 
       filteredOrder.map(async (element) => {
           console.log(element)
 
           //12122023
-          // if(customerRefs.includes(element.order_id)) return;
+          // if(customerRefs.includes(element.invoice_ref_num)) return;
   
           let orderNo = uuidv4();
           let shopInfo = getShopInfo(res.locals.shop, element.shop_id)
@@ -200,7 +200,7 @@ exports.getOrderList = async (req, res) => {
             orderno: orderNo,
             debtorno: custBranch.debtorno,
             branchcode: custBranch.branchcode,
-            customerref: element.order_id,
+            customerref: element.invoice_ref_num,
             buyername: element.buyer.name,
             comments: "",
             // orddate: element.create_time,
@@ -235,7 +235,7 @@ exports.getOrderList = async (req, res) => {
             payload:{
               debtorno: custBranch.debtorno,
               branchcode: custBranch.branchcode,
-              customerref: element.order_id.toString().substring(0, 50),
+              customerref: element.invoice_ref_num.toString().substring(0, 50),
               buyername: element.buyer.name.substring(0, 50),
               comments: "",
               orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
@@ -273,7 +273,7 @@ exports.getOrderList = async (req, res) => {
           // let payloadSO_XMLRPC = {
           //   debtorno: custBranch.debtorno,
           //   branchcode: custBranch.branchcode,
-          //   customerref: element.order_id.toString().substring(0, 50),
+          //   customerref: element.invoice_ref_num.toString().substring(0, 50),
           //   buyername: element.buyer.name.substring(0, 50),
           //   comments: "",
           //   orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
@@ -389,7 +389,7 @@ exports.getOrderList = async (req, res) => {
               shop: shop.shop_id,
               executed: new Date(),
               migration: 0,
-              customerref: element.order_id,
+              customerref: element.invoice_ref_num,
               payload:{
                 orderno: "-",
                 koli: '',

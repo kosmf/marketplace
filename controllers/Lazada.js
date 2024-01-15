@@ -123,13 +123,13 @@ exports.getOrderList = async (req, res) => {
   const soTrx = await salesorders.findAll({
     where: {
       marketplace: "Lazada",
-      migration: '1',
-      executed: {
-        [Op.between]: [
-          moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
-          moment(moment.tz(jakartaTimezone)).toDate()
-        ]
-      }
+      // migration: '1',
+      // executed: {
+      //   [Op.between]: [
+      //     moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
+      //     moment(moment.tz(jakartaTimezone)).toDate()
+      //   ]
+      // }
     }
   });
 
@@ -514,7 +514,7 @@ exports.getOrderList = async (req, res) => {
                 koli: '',
                 stkcode: element.sku,
                 qtyinvoiced: 0,
-                unitprice: element.item_price,
+                unitprice: element.paid_price, //update dari item_price jadi paid_price 11/01/2024
                 quantity: 1,
                 estimate: 0,
                 discountpercent: 0,

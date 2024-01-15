@@ -259,13 +259,13 @@ exports.getOrderList = async (req, res) => {
   const soTrx = await salesorders.findAll({
     where: {
       marketplace: "Shopee",
-      migration: '1',
-      executed: {
-        [Op.between]: [
-          moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
-          moment(moment.tz(jakartaTimezone)).toDate()
-        ]
-      }
+      // migration: '1',
+      // executed: {
+      //   [Op.between]: [
+      //     moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
+      //     moment(moment.tz(jakartaTimezone)).toDate()
+      //   ]
+      // }
     }
   });
 
@@ -428,7 +428,7 @@ exports.getOrderList = async (req, res) => {
           orddate: moment.unix(element.create_time).format('YYYY-MM-DD'),
           ordertype: "GS",
           shipvia: "1",
-          deladd1: element.recipient_address.full_address,
+          deladd1: element.recipient_address.full_address.substring(0, 253),
           deladd2: element.recipient_address.district,
           deladd3: element.recipient_address.city,
           deladd4: element.recipient_address.state,
