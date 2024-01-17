@@ -492,7 +492,7 @@ exports.getOrderList = async (req, res) => {
               koli:'',
               stkcode: element.sku,
               qtyinvoiced:'0',
-              unitprice:element.item_price,
+              unitprice:+element.paid_price + +element.voucher_platform,
               quantity:'1',
               estimate:0,
               discountpercent:0,
@@ -514,7 +514,7 @@ exports.getOrderList = async (req, res) => {
                 koli: '',
                 stkcode: element.sku,
                 qtyinvoiced: 0,
-                unitprice: element.paid_price, //update dari item_price jadi paid_price 11/01/2024
+                unitprice: +element.paid_price + +element.voucher_platform, //update dari item_price jadi paid_price 11/01/2024
                 quantity: 1,
                 estimate: 0,
                 discountpercent: 0,
