@@ -189,6 +189,38 @@ module.exports = function(sequelize, DataTypes) {
     idseller: {
       type: DataTypes.STRING(20),
       allowNull: false
+    },
+    active: {
+      type: DataTypes.STRING(1),
+      allowNull: false
+    },
+    token: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    refresh_token: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    auth_code: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    marketplace: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    app_key: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    app_secret: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    cipher: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     sequelize,

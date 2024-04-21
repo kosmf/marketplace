@@ -108,7 +108,7 @@ exports.methodSignature = (req, res) => {
   });
 }
 
-exports.insertSO = (req, res) => {
+exports.insertSOold = (req, res) => {
   // Create an XML-RPC client
   const client = xmlrpc.createClient({ host: 'office.sm-group.co.id', port: 80, path: '/api/api_xml-rpc.php' });
 
@@ -157,7 +157,66 @@ exports.insertSO = (req, res) => {
   });
 }
 
-exports.insertSOD = (req, res) => {
+exports.insertSO = (req, res) => {
+  // Create an XML-RPC client
+  const client = xmlrpc.createClient({ host: 'office.sm-group.co.id', port: 80, path: '/api/api_xml-rpc.php' });
+
+  const salesOrderHeader = {
+    debtorno: "123", //debtorno & branchcode harus sama
+    branchcode: "123",
+    customerref: 'ABC123',
+    buyername: 'John Doe',
+    comments: 'This is a comment.',
+    orddate: moment(new Date()).format('DD/MM/YYYY'), //order date harus hari ini/kedepan
+    ordertype: 'GS',
+    shipvia: 1,
+    deladd1: '123 Main Street',
+    deladd2: 'Anytown, CA 91234',
+    deladd3: 'Anytown',
+    deladd4: 'Anytown',
+    deladd5: 'Anytown',
+    deladd6: 'Indonesia',
+    contactphone: '(123) 456-7890',
+    contactemail: 'sidharta@gmail.com',
+    deliverto: 'John Doe',
+    deliverblind: 1, //1
+    freightcost: 100,
+    fromstkloc: "BP", //PUSAT
+    poplaced: 0,
+    printedpackingslip: 0,
+    deliverydate: moment(new Date()).format('DD/MM/YYYY'), //harus maju dr tgl skrng
+    confirmeddate: moment(new Date()).format('DD/MM/YYYY'), //harus maju dr tgl skrng
+    datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'), //harus maju dr tgl skrng
+    quotedate: moment(new Date()).format('DD/MM/YYYY'), //harus maju dr tgl skrng
+    quotation: 0,
+    salesperson: 'SHB', //Harus sesuai di DB
+  };
+
+  // Call the remote method
+  client.methodCall('weberp.xmlrpc_InsertSalesOrderHeader', [salesOrderHeader, 'admin', 'zhalfa12'], (error, value) => {
+    if (error) {
+      console.error('Error:', error);
+      return response.res200(res, "001", "Error", error); // Assuming response.res200 is a custom function for sending HTTP responses
+    } else {
+      console.log('Result:', value);
+      
+      // Check the result of the function call
+      if (Array.isArray(value) && value.length >= 1 && value[0] === 0) {
+        // The function call was successful
+        console.log('Sales order header inserted successfully.');
+        return response.res200(res, "000", "Success", value);
+      } else {
+        // The function call failed or returned an unexpected response
+        const errorMessage = 'Unexpected XML-RPC response: ' + JSON.stringify(value);
+        console.error(errorMessage);
+        return response.res200(res, "001", "Error", errorMessage);
+      }
+    }
+  });
+}
+
+
+exports.insertSODold = (req, res) => {
   // Create an XML-RPC client
   const client = xmlrpc.createClient({ host: 'office.sm-group.co.id', port: 80, path: '/api/api_xml-rpc.php' });
 
@@ -187,7 +246,7 @@ exports.insertSOD = (req, res) => {
     }
   
     // Check the result of the function call
-    if (value[0] === 0) {
+    if (value && value[0] === 0) {
       // The function call was successful
       console.log('Sales order line inserted successfully.');
       return response.res200(res, "000", "Success", value);
@@ -200,3 +259,45 @@ exports.insertSOD = (req, res) => {
     }
   })
 }
+
+exports.insertSOD = (req, res) => {
+  // Create an XML-RPC client
+  const client = xmlrpc.createClient({ host: 'office.sm-group.co.id', port: 80, path: '/api/api_xml-rpc.php' });
+
+  const salesOrderLine = {
+    // orderlineno: 3, incremental, tidak perlu di request
+    orderno: "76037",
+    koli: '',
+    stkcode: '014251140392',
+    qtyinvoiced: 0,
+    unitprice: 100,
+    quantity: 10,
+    estimate: 0,
+    discountpercent: 0,
+    discountpercent2: 0,
+    actualdispatchdate: new Date(),
+    completed: 0,
+    narrative: 'This is a comment.',
+    itemdue: '2023-10-28',
+    poline: '0',
+  };
+  
+  client.methodCall('weberp.xmlrpc_InsertSalesOrderLine', [salesOrderLine, 'admin', 'zhalfa12'], (error, value) => {
+    if (error) {
+      console.error('Error:', error);
+      return response.res200(res, "001", "Error", error); // Assuming response.res200 is a custom function for sending HTTP responses
+    }
+  
+    // Check the result of the function call
+    if (value && value[0] === 0) {
+      // The function call was successful
+      console.log('Sales order line inserted successfully.');
+      return response.res200(res, "000", "Success", value);
+    } else {
+      // The function call failed or returned an unexpected response
+      const errorMessage = 'Unexpected XML-RPC response: ' + JSON.stringify(value);
+      console.error(errorMessage);
+      return response.res200(res, "001", "Error", errorMessage);
+    }
+  });
+};

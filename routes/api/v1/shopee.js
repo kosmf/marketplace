@@ -5,7 +5,7 @@ const router = express.Router();
 const response = require("@Components/response");
 
 const shopeController = require("@root/controllers/Shopee");
-// const { tokenAuth } = require("@Middlewares/shopee")
+const cronController = require("@root/controllers/cron");
 
 const index = (req, res, next) => response.res404(res);
 
@@ -43,6 +43,22 @@ router.route("/getOrderDetail")
 router.route("/migration")
     .get(async (req, res, next) => {
         await shopeController.xmlRPC(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
+router.route("/startCron")
+    .get(async (req, res, next) => {
+        await cronController.startCron(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
+router.route("/stopCron")
+    .get(async (req, res, next) => {
+        await cronController.stopCron(req, res, next).catch((error) => {
             console.error(error);
             return response.res500(res)
         })

@@ -3,7 +3,7 @@ const response = require("@Components/response")
 const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace, log_rpc } = require("@Configs/database")
 const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
-const { FS_ID, SHOP_ID } = process.env
+const { FS_ID } = process.env
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require("sequelize");
 
@@ -68,6 +68,333 @@ exports.stressTest = async (req, res) => {
   }
   
   return response.res200(res, "000", "Success", { result: result });
+}
+
+exports.getTokenInternal = async () => {
+
+  let config = {
+    method: 'post',
+    maxBodyLength: Infinity,
+    url: 'https://accounts.tokopedia.com/token?grant_type=client_credentials',
+    headers: { 
+      'Authorization': 'Basic '+TOKPED_ACCOUNT
+    }
+  };
+
+  // request token to tokopedia
+  let reqToken = await axios.request(config)
+  .then((response) => {
+
+    console.log({ response: response.data});
+    if(response.data.access_token){
+
+      // res.locals.token = response.data.access_token
+      return response.data;
+    }
+
+    return 0;
+  })
+  .catch((error) => {
+
+    console.log(error);
+    return 0;
+  });
+
+  if(reqToken){
+    const updateToken = await debtorsmaster.update(
+      {
+        token: reqToken.access_token,
+        refresh_token: reqToken.access_token
+      },
+      {
+        where: {
+          marketplace: 'Tokopedia'
+        }
+      })
+  
+    console.log({ updateToken: updateToken })
+  
+    const payloadReturn = { 
+      req: config, 
+      refreshToken: refreshToken 
+    }
+  
+    return payloadReturn;
+  }
+
+  const payloadError = { 
+    error: 1,
+    message: "Error during get token"
+  }
+
+  return payloadError;
+};
+
+exports.getOrderListInternal = async (shopId) => {
+
+  // Get current date
+  const currentDate = moment();
+
+  const jakartaTimezone = 'Asia/Jakarta';
+  
+  // Calculate yesterday's date
+  const yesterdayDate = currentDate.clone().subtract(3, 'day');
+  
+  // Set the time to 00:00:00 for yesterday
+  const fromTime = yesterdayDate.startOf('day').unix();
+
+  // Calculate the end date (yesterday)
+  const endDate = currentDate.clone();
+
+  // Set the time to 23:59:59 for yesterday
+  const toTime = endDate.endOf('day').unix();
+
+  // Set the time to 23:59:59 for yesterday
+  // const toTime = yesterdayDate.endOf('day').unix();
+  
+  console.log('Unix timestamp for from_date (00:00):', fromTime);
+  console.log('Unix timestamp for to_date (23:59):', toTime);
+
+  const debtOrsmaster = await debtorsmaster.findOne({
+    raw: true,
+    where: {
+      idseller: shopId.toString()
+    }
+  })
+
+  const custBranch = await custbranch.findOne({
+    raw: true,
+    where: {
+      debtorno: debtOrsmaster?.debtorno ?? "832"
+    }
+  })
+
+  const soTrx = await salesorders.findAll({
+    where: {
+      marketplace: "Tokopedia",
+      // migration: "1",
+      // executed: {
+      //   [Op.between]: [
+      //     moment(moment.tz(jakartaTimezone)).subtract(7, 'days').set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
+      //     moment(moment.tz(jakartaTimezone)).toDate()
+      //   ]
+      // }
+    }
+  });
+
+  const customerRefs = soTrx.map(order => order.customerref);
+
+  console.log("customerRefs : ",customerRefs)
+
+  // return response.res200(res, "000", "Success", {customerRefs: customerRefs, custBranch: custBranch })
+
+  const uidLog = uuidv4();
+
+  let config = {
+    method: 'get',
+    maxBodyLength: Infinity,
+    url: 'https://fs.tokopedia.net/v2/order/list?fs_id='+FS_ID+'&shop_id='+shopId+'&from_date='+fromTime+'&to_date='+toTime+'&page=1&per_page=10000',
+    headers: { 
+      'Authorization': 'Bearer '+debtOrsmaster.refresh_token
+    }
+  };
+  
+  const reqGOLog = {
+    uid: uidLog,
+    payload: config,
+    marketplace: 'Tokopedia',
+    shop_id: shopId,
+    executed: new Date(),
+    api: '/v2/order/list',
+    phase: 'Request',
+    id: uuidv4()
+  }
+
+  let insertReqGOLog = await log_marketplace.create(reqGOLog);
+
+  console.log( {insertReqGOLog:insertReqGOLog }); 
+
+  const orderList = await axios.request(config)
+  .then(async(resApi) => {
+
+    const resGOLog = {
+      uid: uidLog,
+      payload: resApi.data,
+      marketplace: 'Tokopedia',
+      shop_id: shopId,
+      executed: new Date(),
+      api: '/v2/order/list',
+      phase: 'Response',
+      id: uuidv4()
+    }
+
+    let insertResGOLog = await log_marketplace.create(resGOLog);
+    console.log( {insertResGOLog:insertResGOLog }); 
+
+    // console.log(JSON.stringify(resApi.data));
+    let filteredOrder =  resApi["data"].data.filter(order => order.order_status >= 500)
+
+    filteredOrder = filteredOrder.filter(order => !customerRefs.includes(order.invoice_ref_num));
+
+    filteredOrder.map(async (element) => {
+        console.log(element)
+
+        let orderNo = uuidv4();
+
+        let payloadSO = {
+          orderno: orderNo,
+          debtorno: custBranch.debtorno,
+          branchcode: custBranch.branchcode,
+          customerref: element.invoice_ref_num,
+          buyername: element.buyer.name,
+          comments: "",
+          // orddate: element.create_time,
+          orddate: moment.unix(element.create_time).format('YYYY-MM-DD'),
+          ordertype: "GS",
+          shipvia: "1",
+          deladd1: element.recipient.address.address_full,
+          deladd2: element.recipient.address.district,
+          deladd3: element.recipient.address.city,
+          deladd4: element.recipient.address.province,
+          deladd5: element.recipient.address.postal_code,
+          deladd6: element.recipient.address.country,
+          contactphone: shopInfo.phone,
+          contactemail: shopInfo.email,
+          deliverto: shopInfo.shop_name,
+          // contactphone: shopInfo.phone,
+          // contactemail: shopInfo.email,
+          // deliverto: shopInfo.shop_name,
+          deliverblind: '1',
+          freightcost: '0',
+          fromstkloc: custBranch.defaultlocation,
+          deliverydate: element.shipment_fulfillment.accept_deadline.split("T")[0],
+          confirmeddate: element.shipment_fulfillment.confirm_shipping_deadline.split("T")[0],
+          printedpackingslip: '0',
+          datepackingslipprinted: element.shipment_fulfillment.accept_deadline.split("T")[0],
+          quotation: '0',
+          quotedate:  element.shipment_fulfillment.accept_deadline.split("T")[0],
+          poplaced: '0',
+          salesperson: custBranch.salesman,
+          userid: 'marketplace',
+          marketplace: "Tokopedia",
+          shop: shopId,
+          executed: new Date(),
+          migration: 0,
+          payload:{
+            debtorno: custBranch.debtorno,
+            branchcode: custBranch.branchcode,
+            customerref: element.invoice_ref_num.toString().substring(0, 50),
+            buyername: element.buyer.name.substring(0, 50),
+            comments: "",
+            orddate: moment.unix(element.create_time).format('DD/MM/YYYY'),
+            // orddate: moment(new Date()).format('DD/MM/YYYY'),
+            ordertype: "GS",
+            shipvia: "1",
+            deladd1: element.recipient.address.address_full.substring(0, 40),
+            deladd2: element.recipient.address.district.substring(0, 40),
+            deladd3: element.recipient.address.city.substring(0, 40),
+            deladd4: element.recipient.address.province.substring(0, 40),
+            deladd5: element.recipient.address.postal_code.substring(0, 20),
+            deladd6: element.recipient.address.country.substring(0, 15),
+            contactphone: shopInfo?.phone?.substring(0, 25) || "",
+            contactemail: shopInfo?.email?.substring(0, 40) || "",
+            deliverto: shopInfo.shop_name.substring(0, 40),
+            deliverblind: '1',
+            freightcost: 0,
+            fromstkloc: custBranch.defaultlocation,
+            deliverydate: moment(new Date()).format('DD/MM/YYYY'),
+            confirmeddate:moment(new Date()).format('DD/MM/YYYY'),
+            printedpackingslip: 0,
+            datepackingslipprinted: moment(new Date()).format('DD/MM/YYYY'),
+            quotation: 0,
+            quotedate:  moment(new Date()).format('DD/MM/YYYY'),
+            poplaced: 0,
+            salesperson: custBranch.salesman
+          }
+        }
+
+        let insertSO = await salesorders.create(payloadSO);
+
+        console.log( {insertSO:insertSO });
+
+        element.products.map(async(product) => {
+          let orderLineNo = uuidv4();  
+
+          let payloadSOD = {
+            orderlineno: orderLineNo,
+            // orderno: (!orderNoInternal[0] ? orderNoInternal[1]:"00000"),     
+            orderno: "-",    
+            koli:'',
+            stkcode: product.sku,
+            qtyinvoiced:'0',
+            unitprice:product.price,
+            quantity:product.quantity,
+            estimate:0,
+            discountpercent:0,
+            discountpercent2:0,
+            // actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
+            actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+            completed:'0',
+            narrative:'',
+            // itemdue: element.shipment_fulfillment.accept_deadline.split("T")[0],
+            itemdue: moment(new Date()).format('YYYY-MM-DD'),
+            poline:0,
+            marketplace: "Tokopedia",
+            shop: shopId,
+            executed: new Date(),
+            migration: 0,
+            customerref: element.invoice_ref_num,
+            payload:{
+              orderno: "-",
+              koli: '',
+              stkcode: product.sku,
+              qtyinvoiced:0,
+              unitprice:product.price,
+              quantity:product.quantity,
+              estimate:0,
+              discountpercent:0,
+              discountpercent2:0,
+              // actualdispatchdate: element.shipment_fulfillment.confirm_shipping_deadline,
+              actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+              completed:0,
+              narrative:'',
+              itemdue: moment(new Date()).format('YYYY-MM-DD'),
+              poline: '0',
+            }
+          }
+      
+          let insertSOD = await salesorderdetails.create(payloadSOD);
+
+          console.log( {insertSOD:insertSOD })
+      })
+    })
+
+    let resInfo = {
+      count: filteredOrder.length, 
+      countTokopedia: resApi["data"].data.length, 
+      data:resApi["data"].data
+    }
+
+    return resInfo;
+  })
+  .catch((error) => {
+    console.log(error)
+
+    let payloadError = {
+      error: error.config
+    }
+
+    return payloadError
+  })
+
+  const payloadReturn = { 
+    succes: 1, 
+    fromTime:fromTime, 
+    toTime: toTime, 
+    orderList: orderList 
+  }
+
+  return payloadReturn;
 }
 
 exports.getOrderList = async (req, res) => {
@@ -261,8 +588,7 @@ exports.getOrderList = async (req, res) => {
               quotation: 0,
               quotedate:  moment(new Date()).format('DD/MM/YYYY'),
               poplaced: 0,
-              salesperson: custBranch.salesman,
-              user: 'marketplace'
+              salesperson: custBranch.salesman
             }
           }
   

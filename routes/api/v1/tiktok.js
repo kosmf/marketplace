@@ -8,7 +8,7 @@ const tiktokController = require("@root/controllers/Tiktok");
 
 const index = (req, res, next) => response.res404(res);
 
-router.route("/getToken")
+router.route("/getToken/:shopId")
     .get(async (req, res, next) => {
         await tiktokController.getToken(req, res, next).catch((error) => {
             console.error(error);
@@ -16,7 +16,7 @@ router.route("/getToken")
         })
     });
 
-router.route("/refreshToken")
+router.route("/refreshToken/:shopId")
     .get(async (req, res, next) => {
         await tiktokController.refreshToken(req, res, next).catch((error) => {
             console.error(error);
@@ -24,9 +24,17 @@ router.route("/refreshToken")
         })
     });
 
-router.route("/getOrderList")
+router.route("/getOrderList/:shopId")
     .get(async (req, res, next) => {
         await tiktokController.getOrderList(req, res, next).catch((error) => {
+            console.error(error);
+            return response.res500(res)
+        })
+    });
+
+router.route("/getShopList/:shopId")
+    .get(async (req, res, next) => {
+        await tiktokController.getShops(req, res, next).catch((error) => {
             console.error(error);
             return response.res500(res)
         })
