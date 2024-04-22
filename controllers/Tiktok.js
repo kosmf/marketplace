@@ -1,7 +1,8 @@
 const axios = require('axios');
 const response = require("@Components/response")
 const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace, log_rpc } = require("@Configs/database")
-const moment = require('moment');
+// const moment = require('moment');
+const moment = require('moment-timezone');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
@@ -250,7 +251,8 @@ exports.refreshTokenInternal = async (shopId) => {
 exports.getOrderListInternal = async (shopId) => {
 
   // Get current date
-  const currentDate = moment();
+  // const currentDate = moment();
+  const currentDate = moment.tz('Asia/Jakarta');
   
   // Calculate yesterday's date
   const yesterdayDate = currentDate.clone().subtract(7, 'day');
@@ -265,12 +267,12 @@ exports.getOrderListInternal = async (shopId) => {
   // const toTime = endDate.endOf('day').unix();
 
   // Now
-  const toTime = moment().unix();
+  const toTime = moment.tz('Asia/Jakarta').unix();
   
   console.log('Unix timestamp for from_date (00:00):', fromTime);
   console.log('Unix timestamp for to_date (23:59):', toTime);
 
-  const timestamp = Math.floor(moment().valueOf() / 1000);
+  const timestamp = Math.floor(moment.tz('Asia/Jakarta').valueOf() / 1000);
   // const timestamp = Math.floor(new Date() / 1000);
 
   // const tokenContent = await readFileAsync(shopId+'/token.txt');
@@ -385,7 +387,7 @@ exports.getOrderListInternal = async (shopId) => {
           payload: config,
           marketplace: 'Tiktok',
           shop_id: shopId,
-          executed: new Date(),
+          executed: moment.tz('Asia/Jakarta'),
           api: 'getOrders',
           phase: 'Request',
           id: uuidv4()
@@ -403,7 +405,7 @@ exports.getOrderListInternal = async (shopId) => {
           payload: response.data,
           marketplace: 'Tiktok',
           shop_id: shopId,
-          executed: new Date(),
+          executed: moment.tz('Asia/Jakarta'),
           api: 'getOrders',
           phase: 'Response',
           id: uuidv4()
@@ -489,7 +491,7 @@ exports.getOrderListInternal = async (shopId) => {
         userid: 'marketplace',
         marketplace: "Tiktok",
         shop: shopId,
-        executed: new Date(),
+        executed: moment.tz('Asia/Jakarta'),
         migration: 0,
         payload: {
           debtorno: custBranch.debtorno,
@@ -541,15 +543,15 @@ exports.getOrderListInternal = async (shopId) => {
           estimate:0,
           discountpercent:0,
           discountpercent2:0,
-          actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+          actualdispatchdate: moment.tz('Asia/Jakarta').format('YYYY-MM-DD'),
           completed:'0',
           narrative:'',
-          itemdue: moment(new Date()).format('YYYY-MM-DD'),
+          itemdue: moment.tz('Asia/Jakarta').format('YYYY-MM-DD'),
           poline:0,
           marketplace: "Tiktok",
           shop: shopId,
           customerref: order.id,
-          executed: new Date(),
+          executed: moment.tz('Asia/Jakarta'),
           migration: 0,
           payload:{
             orderno: "-",
@@ -561,10 +563,10 @@ exports.getOrderListInternal = async (shopId) => {
             estimate: 0,
             discountpercent: 0,
             discountpercent2: 0,
-            actualdispatchdate: moment(new Date()).format('YYYY-MM-DD'),
+            actualdispatchdate: moment.tz('Asia/Jakarta').format('YYYY-MM-DD'),
             completed: 0,
             narrative: 'This is a comment.',
-            itemdue: moment(new Date()).format('YYYY-MM-DD'),
+            itemdue: moment.tz('Asia/Jakarta').format('YYYY-MM-DD'),
             poline: '0',
           }
       }
@@ -593,6 +595,7 @@ exports.getOrderListInternal = async (shopId) => {
 exports.getOrderList = async (req, res) => {
 
   // Get current date
+  // const currentDate = moment();
   const currentDate = moment();
   
   // Calculate yesterday's date
@@ -602,10 +605,11 @@ exports.getOrderList = async (req, res) => {
   const fromTime = yesterdayDate.startOf('day').unix();
 
   // Calculate the end date (yesterday)
-  const endDate = currentDate.clone().subtract(1, 'day');
+  // const endDate = currentDate.clone().subtract(1, 'day');
   
   // Set the time to 23:59:59 for yesterday
-  const toTime = endDate.endOf('day').unix();
+  // const toTime = endDate.endOf('day').unix();
+  const toTime = moment().unix();
   
   console.log('Unix timestamp for from_date (00:00):', fromTime);
   console.log('Unix timestamp for to_date (23:59):', toTime);
