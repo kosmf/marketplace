@@ -73,14 +73,12 @@ const myTask = async (cronStart) => {
 // Define the cron expressions for each task
 const cronExpressions = [
     // '* * * * *' // Run every minute
-    // '5 0 * * *', // 00:05 AM
-    // '10 0 * * *', // 00:10 AM
-    // '15 0 * * *', // 00:15 AM
-    // '20 0 * * *', // 00:20 AM
-    '00 23 * * *',  // 00:25 AM
-    '00 22 * * *', // 10:00 AM
-    '05 21 * * *', // 03:00 PM
-    // '7 11 * * *'  // 10:00 PM
+    '05 00 * * *',  // 00:05 AM
+    '00 04 * * *',  // 04:00 AM
+    '00 08 * * *',  // 08:00 AM
+    '00 12 * * *', // 12:00 PM
+    '00 16 * * *', // 16:00 PM
+    '00 20 * * *', // 20:00 PM
 ];
 
 exports.startCron = async(req, res) => {
