@@ -18,7 +18,7 @@ const myTask = async (cronStart) => {
             raw: true,
             where: {
                 [Op.and]: [
-                    { marketplace: 'TikTok' },
+                    { marketplace: 'Shopee' },
                     // { marketplace: { [Op.not]: 'Tokopedia' } },
                     { active: '1' }
                 ]
@@ -79,7 +79,7 @@ const cronExpressions = [
     // '20 0 * * *', // 00:20 AM
     // '00 20 * * *',  // 00:25 AM
     // '00 19 * * *', // 10:00 AM
-    '15 20 * * *', // 03:00 PM
+    '25 20 * * *', // 03:00 PM
     // '7 11 * * *'  // 10:00 PM
 ];
 
