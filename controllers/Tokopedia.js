@@ -254,9 +254,9 @@ exports.getOrderListInternal = async (shopId) => {
           deladd4: element.recipient.address.province,
           deladd5: element.recipient.address.postal_code,
           deladd6: element.recipient.address.country,
-          contactphone: shopInfo.phone,
-          contactemail: shopInfo.email,
-          deliverto: shopInfo.shop_name,
+          contactphone: "",
+          contactemail: "",
+          deliverto: debtOrsmaster.cipher, //Get Shop Name
           // contactphone: shopInfo.phone,
           // contactemail: shopInfo.email,
           // deliverto: shopInfo.shop_name,
@@ -292,9 +292,12 @@ exports.getOrderListInternal = async (shopId) => {
             deladd4: element.recipient.address.province.substring(0, 40),
             deladd5: element.recipient.address.postal_code.substring(0, 20),
             deladd6: element.recipient.address.country.substring(0, 15),
-            contactphone: shopInfo?.phone?.substring(0, 25) || "",
-            contactemail: shopInfo?.email?.substring(0, 40) || "",
-            deliverto: shopInfo.shop_name.substring(0, 40),
+            // contactphone: shopInfo?.phone?.substring(0, 25) || "",
+            // contactemail: shopInfo?.email?.substring(0, 40) || "",
+            // deliverto: shopInfo.shop_name.substring(0, 40),
+            contactphone: "",
+            contactemail: "",
+            deliverto: debtOrsmaster.cipher, //Get Shop Name
             deliverblind: '1',
             freightcost: 0,
             fromstkloc: custBranch.defaultlocation,
@@ -384,7 +387,7 @@ exports.getOrderListInternal = async (shopId) => {
   })
 
   const payloadReturn = { 
-    succes: 1, 
+    success: 1, 
     fromTime:fromTime, 
     toTime: toTime, 
     orderList: orderList 
