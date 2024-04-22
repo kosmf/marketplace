@@ -141,10 +141,10 @@ exports.getOrderListInternal = async (shopId) => {
 
   // Calculate the end date (yesterday)
   // const endDate = currentDate.clone().subtract(1, 'day');
-  const endDate = currentDate.clone();
+  // const endDate = currentDate.clone();
 
   // Set the time to 23:59:59 for yesterday
-  const toTime = endDate.endOf('day').unix();
+  const toTime = currentDate().unix();
 
   // Set the time to 23:59:59 for yesterday
   // const toTime = yesterdayDate.endOf('day').unix();
