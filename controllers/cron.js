@@ -77,14 +77,14 @@ const cronExpressions = [
     // '10 0 * * *', // 00:10 AM
     // '15 0 * * *', // 00:15 AM
     // '20 0 * * *', // 00:20 AM
-    // '25 0 * * *'  // 00:25 AM
-    // '4 11 * * *', // 10:00 AM
-    '12 17 * * *', // 03:00 PM
+    '00 20 * * *',  // 00:25 AM
+    '00 19 * * *', // 10:00 AM
+    '00 18 * * *', // 03:00 PM
     // '7 11 * * *'  // 10:00 PM
 ];
 
 exports.startCron = async(req, res) => {
-    response.res200(res, "000", "Cronjob Start "+new Date().toISOString(), {})
+    response.res200(res, "000", new Date()+"Cronjob Start "+new Date().toLocaleString(), {})
 
     // Create and schedule cron jobs for the task with each cron expression
     for (let i = 0; i < cronExpressions.length; i++) {
