@@ -3,9 +3,10 @@ const response = require("@Components/response")
 const { salesorderdetails, salesorders, debtorsmaster, custbranch, log_marketplace, log_rpc } = require("@Configs/database")
 const moment = require('moment');
 const xml_rpc = require("@Controllers/xml-rpc-method")
-const { FS_ID } = process.env
+const { TOKPED_ACCOUNT, FS_ID } = process.env
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require("sequelize");
+
 
 const getShopInfo = (shopList, shopId) => {
   let shopInfo = {}
