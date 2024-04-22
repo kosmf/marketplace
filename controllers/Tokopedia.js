@@ -210,9 +210,11 @@ exports.getOrderListInternal = async (shopId) => {
   let insertReqGOLog = await log_marketplace.create(reqGOLog);
 
   console.log( {insertReqGOLog:insertReqGOLog }); 
-
-  const orderList = await axios.request(config)
+  console.log("REs 0");
+  let orderList = await axios.request(config)
   .then(async(resApi) => {
+
+    console.log("REs 1");
 
     const resGOLog = {
       uid: uidLog,
@@ -380,6 +382,8 @@ exports.getOrderListInternal = async (shopId) => {
   .catch((error) => {
     console.log(error)
 
+    console.log("REs 3");
+
     let payloadError = {
       error: error.config
     }
@@ -411,10 +415,11 @@ exports.getOrderList = async (req, res) => {
   const fromTime = yesterdayDate.startOf('day').unix();
 
   // Calculate the end date (yesterday)
-  const endDate = currentDate.clone().subtract(1, 'day');
+  // const endDate = currentDate.clone().subtract(1, 'day');
 
   // Set the time to 23:59:59 for yesterday
-  const toTime = endDate.endOf('day').unix();
+  // const toTime = endDate.endOf('day').unix();
+  const toTime = moment().unix();
 
   // Set the time to 23:59:59 for yesterday
   // const toTime = yesterdayDate.endOf('day').unix();
