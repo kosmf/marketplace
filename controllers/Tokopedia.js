@@ -115,12 +115,7 @@ exports.getTokenInternal = async () => {
   
     console.log({ updateToken: updateToken })
   
-    const payloadReturn = { 
-      req: config, 
-      refreshToken: refreshToken 
-    }
-  
-    return payloadReturn;
+    return reqToken;
   }
 
   const payloadError = { 
